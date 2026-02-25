@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jack Siu — Software Engineer</title>
+  <meta name="description" content="Jack Siu — Backend and full-stack software engineer with 5+ years building distributed systems, real-time pipelines, and consumer apps." />
+  <meta property="og:title" content="Jack Siu — Software Engineer" />
+  <meta property="og:description" content="Backend and full-stack engineer. 5+ years at Oracle Cloud Infrastructure. Built apps shipped to App Store & Google Play." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://jacksiu.dev" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Jack Siu — Software Engineer" />
+  <meta name="twitter:description" content="Backend and full-stack engineer. 5+ years experience. Real systems, real products." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f; --bg2: #0d0d1a;
+      --mint: #00ff87; --orange: #ff6b35;
+      --blue: #38bdf8; --purple: #a78bfa;
+      --text: #f0eeff; --muted: #7b7a9a;
+      --border: rgba(255,255,255,0.07);
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; cursor: none; }
+    #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+    nav, section, footer, .stats-bar, .marquee-wrapper { position: relative; z-index: 1; }
+    .cursor { position: fixed; width: 10px; height: 10px; background: var(--mint); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); mix-blend-mode: difference; transition: width 0.2s, height 0.2s, background 0.2s; }
+    .cursor.hovering { width: 20px; height: 20px; background: var(--orange); }
+    .cursor-ring { position: fixed; width: 38px; height: 38px; border: 1.5px solid rgba(0,255,135,0.5); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%, -50%); transition: transform 0.25s ease, width 0.25s, height 0.25s, border-color 0.2s; }
+    .cursor-ring.hovering { width: 52px; height: 52px; border-color: var(--orange); }
+    body::after { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 2000; opacity: 0.35; }
+    nav { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 4rem; z-index: 100; background: linear-gradient(to bottom, rgba(7,7,15,0.9), transparent); backdrop-filter: blur(16px); }
+    .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: 0.05em; color: var(--mint); }
+    .nav-links { display: flex; gap: 2.5rem; }
+    .nav-links a { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--muted); text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--mint); }
+    .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 8rem 4rem 4rem; position: relative; overflow: hidden; }
+    .hero-tag { font-family: 'DM Mono', monospace; font-size: 0.82rem; color: var(--orange); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; opacity: 0; animation: fadeUp 0.8s 0.2s forwards; }
+    .hero-tag::before { content: ''; display: block; width: 32px; height: 1px; background: var(--orange); }
+    .hero-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(4rem, 10vw, 9rem); line-height: 0.9; letter-spacing: -0.03em; margin-bottom: 1.5rem; opacity: 0; animation: fadeUp 0.8s 0.4s forwards; }
+    .hero-name span.accent { color: var(--mint); }
+    .hero-name span.accent2 { color: var(--orange); }
+    .hero-desc { font-size: 1.15rem; color: var(--muted); max-width: 520px; line-height: 1.75; margin-bottom: 1.5rem; font-weight: 300; opacity: 0; animation: fadeUp 0.8s 0.6s forwards; }
+    .hero-typewriter { font-family: 'DM Mono', monospace; font-size: 0.9rem; color: var(--mint); margin-bottom: 2.5rem; letter-spacing: 0.05em; opacity: 0; animation: fadeUp 0.8s 0.7s forwards; min-height: 1.4em; }
+    .cursor-blink { display: inline-block; width: 2px; height: 1em; background: var(--mint); margin-left: 2px; vertical-align: middle; animation: blink 1s step-end infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.8s 0.8s forwards; }
+    .btn { font-family: 'DM Mono', monospace; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.9rem 2rem; border-radius: 3px; text-decoration: none; transition: all 0.2s; cursor: none; }
+    .btn-primary { background: var(--mint); color: #000; font-weight: 500; }
+    .btn-primary:hover { background: #00e87a; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,255,135,0.25); }
+    .btn-secondary { border: 1px solid var(--border); color: var(--text); background: transparent; }
+    .btn-secondary:hover { border-color: var(--mint); color: var(--mint); }
+    .hero-scroll { position: absolute; bottom: 2.5rem; left: 4rem; font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; display: flex; align-items: center; gap: 0.75rem; opacity: 0; animation: fadeUp 0.8s 1.2s forwards; }
+    .scroll-line { width: 1px; height: 40px; background: linear-gradient(to bottom, var(--muted), transparent); animation: scrollPulse 2s ease-in-out infinite; }
+    @keyframes scrollPulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+    .stats-bar { display: flex; gap: 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: rgba(13,13,26,0.7); backdrop-filter: blur(12px); }
+    .stat-item { flex: 1; padding: 2rem; border-right: 1px solid var(--border); text-align: center; transition: background 0.2s; }
+    .stat-item:last-child { border-right: none; }
+    .stat-item:hover { background: rgba(0,255,135,0.04); }
+    .stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.5rem; color: var(--mint); letter-spacing: -0.03em; line-height: 1; }
+    .stat-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.4rem; }
+    .marquee-wrapper { overflow: hidden; border-bottom: 1px solid var(--border); padding: 1rem 0; background: rgba(7,7,15,0.8); }
+    .marquee-track { display: flex; gap: 3rem; animation: marquee 25s linear infinite; white-space: nowrap; }
+    .marquee-track:hover { animation-play-state: paused; }
+    .marquee-item { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; display: flex; align-items: center; gap: 1.5rem; flex-shrink: 0; }
+    .marquee-item::after { content: '✦'; color: var(--mint); font-size: 0.6rem; }
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    section { padding: 6rem 4rem; position: relative; }
+    .section-label { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--orange); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; }
+    .section-label::after { content: ''; flex: 1; max-width: 60px; height: 1px; background: var(--orange); }
+    .section-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(2.2rem, 5vw, 3.5rem); line-height: 1; letter-spacing: -0.02em; margin-bottom: 3.5rem; }
+    .skills-section { background: rgba(13,13,26,0.6); backdrop-filter: blur(10px); }
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5px; background: var(--border); border: 1px solid var(--border); }
+    .skill-card { background: rgba(13,13,26,0.9); padding: 2rem; transition: background 0.2s; }
+    .skill-card:hover { background: rgba(17,17,37,0.98); }
+    .skill-card-label { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--mint); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
+    .skill-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .skill-tag { font-size: 0.8rem; padding: 0.3rem 0.75rem; border-radius: 2px; font-family: 'DM Mono', monospace; color: var(--text); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: border-color 0.2s; }
+    .skill-card:hover .skill-tag { border-color: rgba(0,255,135,0.2); }
+    .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5px; background: var(--border); border: 1px solid var(--border); }
+    .project-card { background: rgba(7,7,15,0.9); padding: 2.5rem; position: relative; overflow: hidden; transition: background 0.25s; }
+    .project-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; transition: opacity 0.25s; opacity: 0; }
+    .project-card.c1::before { background: linear-gradient(90deg, var(--mint), var(--blue)); }
+    .project-card.c2::before { background: linear-gradient(90deg, var(--orange), var(--purple)); }
+    .project-card.c3::before { background: linear-gradient(90deg, var(--purple), var(--mint)); }
+    .project-card:hover { background: rgba(13,13,26,0.98); }
+    .project-card:hover::before { opacity: 1; }
+    .project-card.c1:hover { box-shadow: inset 0 0 60px rgba(0,255,135,0.04); }
+    .project-card.c2:hover { box-shadow: inset 0 0 60px rgba(255,107,53,0.04); }
+    .project-card.c3:hover { box-shadow: inset 0 0 60px rgba(167,139,250,0.04); }
+    .project-num { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 1.5rem; }
+    .project-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.5rem; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+    .project-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem; }
+    .project-stack { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.5rem; }
+    .project-stack span { font-family: 'DM Mono', monospace; font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 2px; letter-spacing: 0.05em; }
+    .project-stack span.t1 { background: rgba(0,255,135,0.1); color: var(--mint); border: 1px solid rgba(0,255,135,0.2); }
+    .project-stack span.t2 { background: rgba(255,107,53,0.1); color: var(--orange); border: 1px solid rgba(255,107,53,0.2); }
+    .project-stack span.t3 { background: rgba(167,139,250,0.1); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+    .project-link { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--mint); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.4rem; transition: gap 0.2s; }
+    .project-link:hover { gap: 0.7rem; }
+    .exp-section { background: rgba(13,13,26,0.6); backdrop-filter: blur(10px); }
+    .exp-list { display: flex; flex-direction: column; }
+    .exp-item { display: grid; grid-template-columns: 200px 1fr; gap: 3rem; padding: 2.5rem 0; border-bottom: 1px solid var(--border); }
+    .exp-item:first-child { border-top: 1px solid var(--border); }
+    .exp-dates { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+    .exp-company { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .exp-loc { font-size: 0.78rem; color: var(--muted); }
+    .exp-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.2rem; margin-bottom: 1rem; letter-spacing: -0.01em; }
+    .exp-bullets { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    .exp-bullets li { font-size: 0.88rem; color: var(--muted); line-height: 1.65; padding-left: 1.2rem; position: relative; }
+    .exp-bullets li::before { content: '→'; position: absolute; left: 0; color: var(--orange); font-size: 0.75rem; }
+    .contact-section { text-align: center; padding: 8rem 4rem; }
+    .contact-email { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(1.8rem, 5vw, 4rem); color: var(--text); text-decoration: none; letter-spacing: -0.03em; display: inline-block; position: relative; transition: color 0.2s; }
+    .contact-email::after { content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--mint), var(--orange)); transform: scaleX(0); transition: transform 0.3s; transform-origin: left; }
+    .contact-email:hover { color: var(--mint); }
+    .contact-email:hover::after { transform: scaleX(1); }
+    .copy-btn { font-family: 'DM Mono', monospace; font-size: 0.72rem; padding: 0.5rem 1.2rem; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 2px; cursor: none; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.2s; margin-top: 1rem; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .copy-btn:hover { border-color: var(--mint); color: var(--mint); }
+    .copy-btn.copied { border-color: var(--mint); color: var(--mint); background: rgba(0,255,135,0.08); }
+    .social-links { display: flex; justify-content: center; gap: 2rem; margin-top: 2.5rem; }
+    .social-links a { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--muted); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
+    .social-links a:hover { color: var(--text); }
+    footer { border-top: 1px solid var(--border); padding: 1.5rem 4rem; display: flex; justify-content: space-between; align-items: center; background: rgba(7,7,15,0.9); }
+    footer span { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.5rem; } .nav-links { display: none; }
+      .hero, section { padding: 4rem 1.5rem; }
+      .exp-item { grid-template-columns: 1fr; gap: 1rem; }
+      .stats-bar { flex-wrap: wrap; } .stat-item { flex: 1 1 50%; }
+      footer { padding: 1.5rem; flex-direction: column; gap: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particle-canvas"></canvas>
+  <div id="root"></div>
+  <script>
+    (function() {
+      const canvas = document.getElementById('particle-canvas');
+      const ctx = canvas.getContext('2d');
+      let W, H, particles, mouse = { x: -9999, y: -9999 };
+      const COLORS = ['#00ff87','#a78bfa','#38bdf8','#ff6b35'];
+      function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+      function Particle() {
+        this.x = Math.random()*W; this.y = Math.random()*H;
+        this.vx = (Math.random()-0.5)*0.4; this.vy = (Math.random()-0.5)*0.4;
+        this.r = Math.random()*1.8+0.8;
+        this.color = COLORS[Math.floor(Math.random()*COLORS.length)];
+        this.baseAlpha = Math.random()*0.4+0.2; this.alpha = this.baseAlpha;
+      }
+      Particle.prototype.update = function() {
+        this.x += this.vx; this.y += this.vy;
+        if(this.x<0||this.x>W) this.vx*=-1;
+        if(this.y<0||this.y>H) this.vy*=-1;
+        const dx=this.x-mouse.x, dy=this.y-mouse.y, dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<180) {
+          const f=(180-dist)/180;
+          this.vx+=(dx/dist)*f*0.08; this.vy+=(dy/dist)*f*0.08;
+          this.alpha=Math.min(1,this.baseAlpha+f*0.6);
+          const s=Math.sqrt(this.vx*this.vx+this.vy*this.vy);
+          if(s>2.5){this.vx*=2.5/s; this.vy*=2.5/s;}
+        } else {
+          this.alpha+=(this.baseAlpha-this.alpha)*0.05;
+          this.vx*=0.995; this.vy*=0.995;
+          if(Math.abs(this.vx)<0.1) this.vx+=(Math.random()-0.5)*0.05;
+          if(Math.abs(this.vy)<0.1) this.vy+=(Math.random()-0.5)*0.05;
+        }
+      };
+      Particle.prototype.draw = function() {
+        ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+        ctx.fillStyle=this.color; ctx.globalAlpha=this.alpha; ctx.fill();
+      };
+      function init() { resize(); particles=Array.from({length:90},()=>new Particle()); }
+      function drawConnections() {
+        for(let i=0;i<particles.length;i++) {
+          for(let j=i+1;j<particles.length;j++) {
+            const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+            const dist=Math.sqrt(dx*dx+dy*dy);
+            if(dist<140) {
+              ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y);
+              ctx.lineTo(particles[j].x,particles[j].y);
+              ctx.strokeStyle='#00ff87'; ctx.globalAlpha=(1-dist/140)*0.25;
+              ctx.lineWidth=0.6; ctx.stroke();
+            }
+          }
+          const mdx=particles[i].x-mouse.x, mdy=particles[i].y-mouse.y;
+          const md=Math.sqrt(mdx*mdx+mdy*mdy);
+          if(md<180) {
+            ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y);
+            ctx.lineTo(mouse.x,mouse.y);
+            ctx.strokeStyle='#00ff87'; ctx.globalAlpha=(1-md/180)*0.5;
+            ctx.lineWidth=0.8; ctx.stroke();
+          }
+        }
+      }
+      function animate() {
+        ctx.clearRect(0,0,W,H);
+        drawConnections();
+        particles.forEach(p=>{p.update();p.draw();});
+        ctx.globalAlpha=1;
+        requestAnimationFrame(animate);
+      }
+      window.addEventListener('resize',resize);
+      window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+      window.addEventListener('mouseleave',()=>{mouse.x=-9999;mouse.y=-9999;});
+      init(); animate();
+    })();
+  </script>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function Cursor() {
+      const [pos,setPos]=useState({x:-100,y:-100});
+      const [ring,setRing]=useState({x:-100,y:-100});
+      const [hovering,setHovering]=useState(false);
+      useEffect(()=>{
+        const move=e=>setPos({x:e.clientX,y:e.clientY});
+        const moveRing=e=>setTimeout(()=>setRing({x:e.clientX,y:e.clientY}),60);
+        const over=e=>{if(e.target.closest('a,button'))setHovering(true);};
+        const out=e=>{if(e.target.closest('a,button'))setHovering(false);};
+        window.addEventListener('mousemove',move);
+        window.addEventListener('mousemove',moveRing);
+        document.addEventListener('mouseover',over);
+        document.addEventListener('mouseout',out);
+        return()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mousemove',moveRing);document.removeEventListener('mouseover',over);document.removeEventListener('mouseout',out);};
+      },[]);
+      return(<><div className={`cursor${hovering?' hovering':''}`} style={{left:pos.x,top:pos.y}}/><div className={`cursor-ring${hovering?' hovering':''}`} style={{left:ring.x,top:ring.y}}/></>);
+    }
+
+    function Typewriter({phrases}) {
+      const [display,setDisplay]=useState('');
+      const [pi,setPi]=useState(0);
+      const [ci,setCi]=useState(0);
+      const [del,setDel]=useState(false);
+      useEffect(()=>{
+        const cur=phrases[pi]; let t;
+        if(!del&&ci<cur.length) t=setTimeout(()=>setCi(c=>c+1),60);
+        else if(!del&&ci===cur.length) t=setTimeout(()=>setDel(true),2000);
+        else if(del&&ci>0) t=setTimeout(()=>setCi(c=>c-1),35);
+        else if(del&&ci===0){setDel(false);setPi(i=>(i+1)%phrases.length);}
+        setDisplay(cur.slice(0,ci));
+        return()=>clearTimeout(t);
+      },[ci,del,pi]);
+      return(<div className="hero-typewriter">{display}<span className="cursor-blink"/></div>);
+    }
+
+    function Counter({target,suffix=''}) {
+      const [count,setCount]=useState(typeof target==='number'?0:target);
+      const ref=useRef();
+      useEffect(()=>{
+        if(typeof target!=='number')return;
+        const obs=new IntersectionObserver(entries=>{
+          if(entries[0].isIntersecting){
+            let s=0; const step=target/50;
+            const t=setInterval(()=>{s+=step;if(s>=target){setCount(target);clearInterval(t);}else setCount(Math.floor(s));},30);
+            obs.disconnect();
+          }
+        });
+        if(ref.current)obs.observe(ref.current);
+        return()=>obs.disconnect();
+      },[]);
+      return <span ref={ref}>{count}{suffix}</span>;
+    }
+
+    function useFadeIn(ref) {
+      useEffect(()=>{
+        const obs=new IntersectionObserver(entries=>{
+          entries.forEach((e,i)=>{if(e.isIntersecting)setTimeout(()=>e.target.classList.add('visible'),i*80);});
+        },{threshold:0.1});
+        if(ref.current)ref.current.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+        return()=>obs.disconnect();
+      },[]);
+    }
+
+    const skills=[
+      {label:"Languages",tags:["Python","JavaScript","TypeScript","Java","SQL","Bash","C#"]},
+      {label:"Frontend",tags:["React","React Native","Angular","HTML/CSS","jQuery","Bootstrap"]},
+      {label:"Backend & Cloud",tags:["Kubernetes","Docker","Terraform","REST APIs","CI/CD","Linux","OCI"]},
+      {label:"Observability",tags:["Grafana","Kubernetes","Linux","OCI"]},
+    ];
+    const projects=[
+      {num:"01",name:"pebbl.",desc:"iOS and Android photo booth app with camera filters, sticker overlays, and a freemium subscription model. Shipped to App Store and Google Play with full CI/CD pipeline.",stack:["React Native","Expo","CI/CD"],link:"https://pebbl-photobooth.carrd.co",linkLabel:"View project",color:"c1"},
+      {num:"02",name:"SmartMaze",desc:"Full-stack AI maze solver implementing BFS, A*, Hill Climbing, and Genetic Algorithms. Watch them compete live in the interactive demo.",stack:["Python","Tkinter","p5.js","JavaScript"],link:"maze.html",linkLabel:"Live Demo",color:"c2"},
+      {num:"03",name:"Incident Automation Engine",desc:"Event-driven distributed system that ingests production alerts, auto-routes and resolves incidents, and streams structured data to downstream consumers — eliminating manual triage on a high-availability critical path.",stack:["Python","Kubernetes","Terraform"],link:"incident-engine.html",linkLabel:"View Architecture",color:"c3"},
+      {num:"04",name:"AI Property Manager",desc:"AI agent that automates end-to-end property management — tenant communication, maintenance scheduling, and lease workflows. Built with LLM-powered automation and real-time integrations.",stack:["Python","React","LLMs"],link:null,linkLabel:"Coming Soon",color:"c1"},
+    ];
+    const experience=[
+      {company:"Oracle Cloud Infrastructure",dates:"June 2022 — Present",location:"Remote",title:"Software Development Engineer, TechOps",bullets:["Built event-driven backend service reducing ticket handling from ~30 min to near zero for 20+ tickets/week","Maintained real-time data pipelines streaming incident data to internal consumers across the org","Owned Terraform + Kubernetes infrastructure deployments with full observability stack","Reduced engineer onboarding time by 60–70% through developer tooling automation","On-call rotation: Grafana investigation, incident triage, post-mortems"]},
+      {company:"pebbl.",dates:"2024 — Present",location:"Remote",title:"Founder & Software Development Engineer",bullets:["Shipped full-stack iOS/Android app from zero to production on App Store and Google Play","Built freemium model with in-app subscriptions; iterated using analytics and user feedback"]},
+      {company:"CDM Smith",dates:"Aug 2020 — May 2022",location:"Philadelphia, PA",title:"Full Stack Software Engineer",bullets:["Built Angular (TypeScript) + Oracle backend apps for government clients","Implemented GeoJSON data pipelines and interactive map visualizations","Maintained PL/SQL data pipelines for sensitive government reporting"]},
+    ];
+    const marqueeItems=["Python","React","Kubernetes","TypeScript","Terraform","Docker","Grafana","Node.js","SQL","CI/CD","REST APIs","React Native","Angular","Linux","OCI"];
+
+    function CopyEmail() {
+      const [copied, setCopied] = useState(false);
+      const copy = () => {
+        navigator.clipboard.writeText('jacksiu.dev@gmail.com');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+      return (
+        <button className={`copy-btn${copied?' copied':''}`} onClick={copy}>
+          {copied ? '✓ Copied!' : '⧉ Copy Email'}
+        </button>
+      );
+    }
+
+    function App() {
+      const skillsRef=useRef();useFadeIn(skillsRef);
+      const projectsRef=useRef();useFadeIn(projectsRef);
+      const expRef=useRef();useFadeIn(expRef);
+      const contactRef=useRef();useFadeIn(contactRef);
+      const [activeSection,setActiveSection]=useState('');
+      useEffect(()=>{
+        const sections=[
+          {id:'skills',ref:skillsRef},
+          {id:'projects',ref:projectsRef},
+          {id:'experience',ref:expRef},
+          {id:'contact',ref:contactRef}
+        ];
+        const obs=new IntersectionObserver(entries=>{
+          entries.forEach(e=>{if(e.isIntersecting)setActiveSection(e.target.id);});
+        },{threshold:0.3});
+        sections.forEach(s=>{if(s.ref.current)obs.observe(s.ref.current);});
+        return()=>obs.disconnect();
+      },[]);
+      return(<>
+        <Cursor/>
+        <nav style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div className="nav-logo">JS</div>
+          <div className="nav-links">
+            <a href="#skills" className={activeSection==='skills'?'active':''}>Skills</a>
+            <a href="#projects" className={activeSection==='projects'?'active':''}>Projects</a>
+            <a href="#experience" className={activeSection==='experience'?'active':''}>Experience</a>
+            <a href="#contact" className={activeSection==='contact'?'active':''}>Contact</a>
+          </div>
+          <a href="Jack_Siu_Resume.pdf" download className="btn btn-secondary" style={{padding:"0.5rem 1.2rem",fontSize:"0.72rem",whiteSpace:"nowrap"}}>↓ Resume</a>
+        </nav>
+        <section className="hero">
+          <div className="hero-tag">Software Engineer</div>
+          <h1 className="hero-name">Jack<br/><span className="accent">Siu</span></h1>
+          <p className="hero-desc">Backend and full-stack engineer building high-availability distributed systems, real-time data pipelines, and products people actually use.</p>
+          <Typewriter phrases={["Backend Engineer.","Systems Builder.","Problem Solver.","Rock Climber.","Cat Dad. 🐱"]}/>
+          <div className="hero-cta">
+            <a href="#projects" className="btn btn-primary">View Work</a>
+            <a href="#contact" className="btn btn-secondary">Get in Touch</a>
+          </div>
+          <div className="hero-scroll"><div className="scroll-line"/>Scroll</div>
+        </section>
+        <div className="stats-bar">
+          {[{num:5,suffix:'+',label:'Years Experience'},{num:3,suffix:'',label:'Apps Shipped to Consumers'},{num:5,suffix:'',label:'Languages in Production'},{num:'∞',suffix:'',label:'Cups of Coffee'}].map((s,i)=>(
+            <div className="stat-item" key={i}>
+              <div className="stat-num"><Counter target={s.num} suffix={s.suffix}/></div>
+              <div className="stat-label">{s.label}</div>
+            </div>
+          ))}
+        </div>
+        <div className="marquee-wrapper">
+          <div className="marquee-track">
+            {[...marqueeItems,...marqueeItems].map((item,i)=><div className="marquee-item" key={i}>{item}</div>)}
+          </div>
+        </div>
+        <section id="skills" className="skills-section" ref={skillsRef}>
+          <div className="section-label fade-in">What I work with</div>
+          <h2 className="section-title fade-in">Tech Stack</h2>
+          <div className="skills-grid">
+            {skills.map((s,i)=>(
+              <div className="skill-card fade-in" key={i}>
+                <div className="skill-card-label">{s.label}</div>
+                <div className="skill-tags">{s.tags.map((t,j)=><span className="skill-tag" key={j}>{t}</span>)}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+        <section id="projects" ref={projectsRef}>
+          <div className="section-label fade-in">Selected Work</div>
+          <h2 className="section-title fade-in">Projects</h2>
+          <div className="projects-grid">
+            {projects.map((p,i)=>(
+              <div className={`project-card fade-in ${p.color}`} key={i}>
+                <div className="project-num">{p.num} —</div>
+                <div className="project-name">{p.name}</div>
+                <p className="project-desc">{p.desc}</p>
+                <div className="project-stack">{p.stack.map((t,j)=><span key={j} className={`t${(j%3)+1}`}>{t}</span>)}</div>
+                {p.link ? <a href={p.link} target="_blank" rel="noreferrer" className="project-link">{p.linkLabel} →</a> : <span className="project-link" style={{color:'var(--muted)',cursor:'default'}}>{p.linkLabel}</span>}
+              </div>
+            ))}
+          </div>
+        </section>
+        <section id="experience" className="exp-section" ref={expRef}>
+          <div className="section-label fade-in">Where I've been</div>
+          <h2 className="section-title fade-in">Experience</h2>
+          <div className="exp-list">
+            {experience.map((e,i)=>(
+              <div className="exp-item fade-in" key={i}>
+                <div className="exp-meta">
+                  <div className="exp-dates">{e.dates}</div>
+                  <div className="exp-company">{e.company}</div>
+                  <div className="exp-loc">{e.location}</div>
+                </div>
+                <div className="exp-content">
+                  <div className="exp-title">{e.title}</div>
+                  <ul className="exp-bullets">{e.bullets.map((b,j)=><li key={j}>{b}</li>)}</ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+        <section id="contact" className="contact-section" ref={contactRef}>
+          <div className="section-label fade-in" style={{justifyContent:'center'}}>Let's work together</div>
+          <h2 className="section-title fade-in" style={{marginBottom:'1.5rem'}}>Get in Touch</h2>
+          <p className="fade-in" style={{color:'var(--muted)',marginBottom:'2rem',fontSize:'1rem'}}>Open to full-time roles and interesting problems.</p>
+          <a href="mailto:jacksiu.dev@gmail.com" className="contact-email fade-in">jacksiu.dev@gmail.com</a>
+          <div className="fade-in" style={{marginTop:'1.2rem'}}>
+            <CopyEmail />
+          </div>
+          <div className="social-links fade-in">
+            <a href="https://github.com/jackklop" target="_blank" rel="noreferrer">GitHub</a>
+            <a href="https://linkedin.com/in/jack-siu1" target="_blank" rel="noreferrer">LinkedIn</a>
+          </div>
+        </section>
+        <footer>
+          <span>© 2026 Jack Siu</span>
+          <span>Built with React · Hosted on GitHub Pages</span>
+        </footer>
+      </>);
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>
