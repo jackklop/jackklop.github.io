@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartMaze — Interactive Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f; --bg2: #0d0d1a; --bg3: #111125;
+      --mint: #00ff87; --orange: #ff6b35; --blue: #38bdf8; --purple: #a78bfa; --red: #ff4757;
+      --text: #f0eeff; --muted: #7b7a9a; --border: rgba(255,255,255,0.07);
+    }
+    html, body { height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; cursor: none; }
+
+    .cursor { position: fixed; width: 10px; height: 10px; background: var(--mint); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); mix-blend-mode: difference; transition: width .2s, height .2s; }
+    .cursor-ring { position: fixed; width: 36px; height: 36px; border: 1.5px solid rgba(0,255,135,0.4); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: transform .25s ease; }
+
+    body::after { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:2000; opacity:.35; }
+
+    nav { display:flex; justify-content:space-between; align-items:center; padding:1.2rem 3rem; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(7,7,15,0.95); backdrop-filter:blur(16px); z-index:100; }
+    .nav-logo { font-family:'Syne',sans-serif; font-weight:800; color:var(--mint); font-size:1rem; text-decoration:none; }
+    .nav-back { font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--muted); text-decoration:none; letter-spacing:.1em; text-transform:uppercase; transition:color .2s; }
+    .nav-back:hover { color:var(--text); }
+
+    .hero { padding:3rem 3rem 2rem; }
+    .hero-tag { font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--orange); letter-spacing:.15em; text-transform:uppercase; margin-bottom:.75rem; display:flex; align-items:center; gap:.6rem; }
+    .hero-tag::before { content:''; width:24px; height:1px; background:var(--orange); }
+    .hero-title { font-family:'Syne',sans-serif; font-weight:800; font-size:clamp(2rem,5vw,3.5rem); letter-spacing:-.03em; margin-bottom:.75rem; }
+    .hero-title span { color:var(--mint); }
+    .hero-desc { color:var(--muted); font-size:.95rem; line-height:1.7; max-width:600px; }
+
+    .main { display:grid; grid-template-columns:1fr 320px; gap:1.5px; padding:0 3rem 3rem; background:var(--border); }
+    .maze-panel { background:var(--bg); padding:2rem; }
+    .side-panel { background:var(--bg2); padding:2rem; display:flex; flex-direction:column; gap:1.5rem; }
+
+    /* Maze canvas area */
+    .maze-container { position:relative; display:flex; justify-content:center; align-items:center; margin-bottom:1.5rem; }
+    canvas { border:1px solid var(--border); image-rendering:pixelated; max-width:100%; }
+
+    /* Controls */
+    .control-label { font-family:'DM Mono',monospace; font-size:.7rem; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-bottom:.6rem; }
+
+    .algo-grid { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:1rem; }
+    .algo-btn { font-family:'DM Mono',monospace; font-size:.72rem; padding:.7rem .8rem; border:1px solid var(--border); background:transparent; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; cursor:none; transition:all .2s; border-radius:2px; text-align:left; }
+    .algo-btn:hover { border-color:var(--text); color:var(--text); }
+    .algo-btn.active { color:#000; font-weight:500; }
+    .algo-btn[data-algo="bfs"].active { background:var(--mint); border-color:var(--mint); }
+    .algo-btn[data-algo="astar"].active { background:var(--blue); border-color:var(--blue); }
+    .algo-btn[data-algo="hill"].active { background:var(--orange); border-color:var(--orange); }
+    .algo-btn[data-algo="genetic"].active { background:var(--purple); border-color:var(--purple); }
+
+    .speed-row { display:flex; gap:.4rem; margin-bottom:1rem; }
+    .speed-btn { font-family:'DM Mono',monospace; font-size:.68rem; padding:.4rem .7rem; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:none; transition:all .2s; border-radius:2px; flex:1; text-align:center; }
+    .speed-btn.active { border-color:var(--mint); color:var(--mint); }
+
+    .action-row { display:flex; gap:.5rem; }
+    .btn { font-family:'DM Mono',monospace; font-size:.75rem; padding:.8rem 1.2rem; border-radius:2px; cursor:none; letter-spacing:.08em; text-transform:uppercase; transition:all .2s; border:none; flex:1; }
+    .btn-run { background:var(--mint); color:#000; font-weight:500; }
+    .btn-run:hover { background:#00e87a; }
+    .btn-run:disabled { background:#1a3329; color:var(--muted); }
+    .btn-reset { background:transparent; border:1px solid var(--border); color:var(--muted); }
+    .btn-reset:hover { border-color:var(--text); color:var(--text); }
+    .btn-new { background:transparent; border:1px solid var(--border); color:var(--muted); }
+    .btn-new:hover { border-color:var(--orange); color:var(--orange); }
+
+    /* Stats */
+    .stat-block { background:var(--bg); border:1px solid var(--border); padding:1.2rem; border-radius:2px; }
+    .stat-block-title { font-family:'DM Mono',monospace; font-size:.68rem; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-bottom:.8rem; }
+    .stat-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem; }
+    .stat-row:last-child { margin-bottom:0; }
+    .stat-key { font-size:.8rem; color:var(--muted); }
+    .stat-val { font-family:'DM Mono',monospace; font-size:.85rem; color:var(--text); }
+    .stat-val.highlight { color:var(--mint); }
+    .stat-val.orange { color:var(--orange); }
+
+    /* Legend */
+    .legend { display:flex; flex-direction:column; gap:.4rem; }
+    .legend-item { display:flex; align-items:center; gap:.6rem; font-size:.78rem; color:var(--muted); }
+    .legend-dot { width:12px; height:12px; border-radius:2px; flex-shrink:0; }
+
+    /* Comparison table */
+    .compare-table { width:100%; border-collapse:collapse; font-size:.78rem; }
+    .compare-table th { font-family:'DM Mono',monospace; font-size:.65rem; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; text-align:left; padding:.4rem .6rem; border-bottom:1px solid var(--border); }
+    .compare-table td { padding:.4rem .6rem; color:var(--muted); border-bottom:1px solid rgba(255,255,255,0.03); }
+    .compare-table tr.done td { color:var(--text); }
+    .compare-table td:first-child { font-family:'DM Mono',monospace; font-size:.7rem; }
+    .compare-table .badge { display:inline-block; padding:.15rem .4rem; border-radius:2px; font-size:.65rem; }
+
+    .maze-draw-hint { font-family:'DM Mono',monospace; font-size:.7rem; color:var(--muted); letter-spacing:.08em; text-align:center; margin-top:.5rem; }
+
+    .divider { height:1px; background:var(--border); }
+
+    @media(max-width:900px) {
+      .main { grid-template-columns:1fr; padding:0 1.5rem 2rem; }
+      .hero { padding:2rem 1.5rem 1.5rem; }
+      nav { padding:1rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="cursor" id="cur"></div>
+  <div class="cursor-ring" id="curR"></div>
+
+  <nav>
+    <a href="index.html" class="nav-logo">JS</a>
+    <a href="index.html" class="nav-back">← Back to Portfolio</a>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-tag">Interactive Demo</div>
+    <h1 class="hero-title">Smart<span>Maze</span></h1>
+    <p class="hero-desc">Watch four pathfinding algorithms compete in real time. Pick an algorithm, generate a maze, and see how each one finds the path — with live stats on nodes explored and time taken.</p>
+  </div>
+
+  <div class="main">
+    <div class="maze-panel">
+      <div class="maze-container">
+        <canvas id="mazeCanvas"></canvas>
+      </div>
+      <p class="maze-draw-hint">Click and drag on the maze to draw/erase walls &nbsp;·&nbsp; Drag the 🟢 Start or 🔴 End markers</p>
+    </div>
+
+    <div class="side-panel">
+      <div>
+        <div class="control-label">Algorithm</div>
+        <div class="algo-grid">
+          <button class="algo-btn active" data-algo="bfs">BFS</button>
+          <button class="algo-btn" data-algo="astar">A*</button>
+          <button class="algo-btn" data-algo="hill">Hill Climbing</button>
+          <button class="algo-btn" data-algo="genetic">Genetic</button>
+        </div>
+
+        <div class="control-label">Speed</div>
+        <div class="speed-row">
+          <button class="speed-btn" data-speed="150">Slow</button>
+          <button class="speed-btn active" data-speed="30">Normal</button>
+          <button class="speed-btn" data-speed="5">Fast</button>
+          <button class="speed-btn" data-speed="0">Instant</button>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-run" id="runBtn">▶ Run</button>
+          <button class="btn btn-reset" id="resetBtn">Reset</button>
+          <button class="btn btn-new" id="newBtn">New Maze</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="stat-block">
+        <div class="stat-block-title">Current Run</div>
+        <div class="stat-row"><span class="stat-key">Algorithm</span><span class="stat-val" id="statAlgo">BFS</span></div>
+        <div class="stat-row"><span class="stat-key">Status</span><span class="stat-val" id="statStatus">Ready</span></div>
+        <div class="stat-row"><span class="stat-key">Nodes Explored</span><span class="stat-val highlight" id="statNodes">0</span></div>
+        <div class="stat-row"><span class="stat-key">Path Length</span><span class="stat-val highlight" id="statPath">—</span></div>
+        <div class="stat-row"><span class="stat-key">Time</span><span class="stat-val orange" id="statTime">—</span></div>
+      </div>
+
+      <div class="stat-block">
+        <div class="stat-block-title">Algorithm Comparison</div>
+        <table class="compare-table">
+          <thead><tr><th>Algo</th><th>Nodes</th><th>Path</th><th>Time</th></tr></thead>
+          <tbody id="compareBody">
+            <tr><td>BFS</td><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td>A*</td><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td>Hill</td><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td>Genetic</td><td>—</td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="control-label">Legend</div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#1a1a2e;border:1px solid #333"></div> Empty</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#2a2a4a"></div> Wall</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#00ff87"></div> Start / End</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(56,189,248,0.35)"></div> Explored</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ff6b35"></div> Path Found</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Cursor
+    const cur = document.getElementById('cur');
+    const curR = document.getElementById('curR');
+    let rx=-100,ry=-100;
+    document.addEventListener('mousemove',e=>{
+      cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px';
+      setTimeout(()=>{ curR.style.left=e.clientX+'px'; curR.style.top=e.clientY+'px'; },80);
+    });
+
+    // Maze setup
+    const COLS = 31, ROWS = 23;
+    const canvas = document.getElementById('mazeCanvas');
+    const ctx = canvas.getContext('2d');
+    let CELL, W, H;
+
+    function resize() {
+      const panel = document.querySelector('.maze-panel');
+      const maxW = panel.clientWidth - 64;
+      const maxH = window.innerHeight * 0.65;
+      CELL = Math.floor(Math.min(maxW/COLS, maxH/ROWS));
+      CELL = Math.max(CELL, 12);
+      W = CELL * COLS; H = CELL * ROWS;
+      canvas.width = W; canvas.height = H;
+      draw();
+    }
+
+    // State
+    let grid = [], startPos = {r:1,c:1}, endPos = {r:ROWS-2,c:COLS-2};
+    let running = false, animHandle = null;
+    let selectedAlgo = 'bfs', speed = 30;
+    let results = {bfs:null,astar:null,hill:null,genetic:null};
+
+    const EMPTY=0, WALL=1, EXPLORED=2, PATH=3;
+
+    function initGrid() {
+      grid = Array.from({length:ROWS}, ()=>Array(COLS).fill(WALL));
+    }
+
+    // Recursive backtracker maze gen
+    function generateMaze() {
+      initGrid();
+      function carve(r,c) {
+        grid[r][c]=EMPTY;
+        const dirs=[[0,2],[0,-2],[2,0],[-2,0]].sort(()=>Math.random()-.5);
+        for(const [dr,dc] of dirs) {
+          const nr=r+dr, nc=c+dc;
+          if(nr>0&&nr<ROWS-1&&nc>0&&nc<COLS-1&&grid[nr][nc]===WALL) {
+            grid[r+dr/2][c+dc/2]=EMPTY;
+            carve(nr,nc);
+          }
+        }
+      }
+      carve(1,1);
+      // ensure start/end are open
+      startPos={r:1,c:1}; endPos={r:ROWS-2,c:COLS-2};
+      grid[startPos.r][startPos.c]=EMPTY;
+      grid[endPos.r][endPos.c]=EMPTY;
+      results={bfs:null,astar:null,hill:null,genetic:null};
+      updateCompare();
+    }
+
+    // Colors
+    const ALGO_COLORS = {
+      bfs:'rgba(0,255,135,0.25)', astar:'rgba(56,189,248,0.25)',
+      hill:'rgba(255,107,53,0.25)', genetic:'rgba(167,139,250,0.25)'
+    };
+    const ALGO_PATH_COLORS = {
+      bfs:'#00ff87', astar:'#38bdf8', hill:'#ff6b35', genetic:'#a78bfa'
+    };
+    const ALGO_NAMES = {bfs:'BFS',astar:'A*',hill:'Hill Climbing',genetic:'Genetic'};
+
+    function draw(explored=[], path=[]) {
+      ctx.fillStyle='#0d0d1a';
+      ctx.fillRect(0,0,W,H);
+
+      // Draw grid
+      for(let r=0;r<ROWS;r++) {
+        for(let c=0;c<COLS;c++) {
+          const x=c*CELL, y=r*CELL;
+          if(grid[r][c]===WALL) {
+            ctx.fillStyle='#1e1e3a';
+            ctx.fillRect(x,y,CELL,CELL);
+            // subtle inner shadow
+            ctx.fillStyle='rgba(0,0,0,0.3)';
+            ctx.fillRect(x,y,CELL,2);
+            ctx.fillRect(x,y,2,CELL);
+          } else {
+            ctx.fillStyle='#0a0a1a';
+            ctx.fillRect(x,y,CELL,CELL);
+          }
+        }
+      }
+
+      // Draw explored
+      const exploredColor = ALGO_COLORS[selectedAlgo];
+      for(const [r,c] of explored) {
+        if((r===startPos.r&&c===startPos.c)||(r===endPos.r&&c===endPos.c)) continue;
+        ctx.fillStyle=exploredColor;
+        ctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);
+      }
+
+      // Draw path
+      const pathColor = ALGO_PATH_COLORS[selectedAlgo];
+      if(path.length>1) {
+        ctx.strokeStyle=pathColor;
+        ctx.lineWidth=CELL*0.4;
+        ctx.lineCap='round';
+        ctx.lineJoin='round';
+        ctx.beginPath();
+        ctx.moveTo(path[0][1]*CELL+CELL/2, path[0][0]*CELL+CELL/2);
+        for(let i=1;i<path.length;i++) {
+          ctx.lineTo(path[i][1]*CELL+CELL/2, path[i][0]*CELL+CELL/2);
+        }
+        ctx.stroke();
+
+        // glow
+        ctx.strokeStyle=pathColor.replace(')',',0.3)').replace('rgb','rgba');
+        ctx.lineWidth=CELL*0.7;
+        ctx.globalAlpha=0.4;
+        ctx.stroke();
+        ctx.globalAlpha=1;
+      }
+
+      // Start marker
+      drawMarker(startPos.r, startPos.c, '#00ff87', 'S');
+      drawMarker(endPos.r, endPos.c, '#ff4757', 'E');
+    }
+
+    function drawMarker(r,c,color,label) {
+      const x=c*CELL+CELL/2, y=r*CELL+CELL/2, rad=CELL*0.42;
+      ctx.beginPath();
+      ctx.arc(x,y,rad,0,Math.PI*2);
+      ctx.fillStyle=color;
+      ctx.fill();
+      ctx.fillStyle='#000';
+      ctx.font=`bold ${Math.max(10,CELL*0.5)}px Syne,sans-serif`;
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText(label,x,y+1);
+    }
+
+    // BFS
+    async function runBFS(onStep) {
+      const visited=Array.from({length:ROWS},()=>Array(COLS).fill(false));
+      const parent=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+      const queue=[[startPos.r,startPos.c]];
+      visited[startPos.r][startPos.c]=true;
+      const explored=[];
+      while(queue.length) {
+        const [r,c]=queue.shift();
+        explored.push([r,c]);
+        if(r===endPos.r&&c===endPos.c) {
+          const path=reconstructPath(parent,endPos.r,endPos.c);
+          await onStep(explored,[...path],true);
+          return {explored:explored.length, path:path.length};
+        }
+        await onStep([...explored],[],false);
+        for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+          const nr=r+dr,nc=c+dc;
+          if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&!visited[nr][nc]&&grid[nr][nc]===EMPTY) {
+            visited[nr][nc]=true;
+            parent[nr][nc]=[r,c];
+            queue.push([nr,nc]);
+          }
+        }
+      }
+      await onStep([...explored],[],true);
+      return {explored:explored.length, path:0};
+    }
+
+    // A*
+    async function runAStar(onStep) {
+      const h=(r,c)=>Math.abs(r-endPos.r)+Math.abs(c-endPos.c);
+      const g=Array.from({length:ROWS},()=>Array(COLS).fill(Infinity));
+      const parent=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+      g[startPos.r][startPos.c]=0;
+      const open=[[h(startPos.r,startPos.c),startPos.r,startPos.c]];
+      const closed=new Set();
+      const explored=[];
+      while(open.length) {
+        open.sort((a,b)=>a[0]-b[0]);
+        const [,r,c]=open.shift();
+        const key=r+','+c;
+        if(closed.has(key)) continue;
+        closed.add(key);
+        explored.push([r,c]);
+        if(r===endPos.r&&c===endPos.c) {
+          const path=reconstructPath(parent,endPos.r,endPos.c);
+          await onStep([...explored],[...path],true);
+          return {explored:explored.length, path:path.length};
+        }
+        await onStep([...explored],[],false);
+        for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+          const nr=r+dr,nc=c+dc;
+          if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&grid[nr][nc]===EMPTY&&!closed.has(nr+','+nc)) {
+            const ng=g[r][c]+1;
+            if(ng<g[nr][nc]) {
+              g[nr][nc]=ng;
+              parent[nr][nc]=[r,c];
+              open.push([ng+h(nr,nc),nr,nc]);
+            }
+          }
+        }
+      }
+      await onStep([...explored],[],true);
+      return {explored:explored.length, path:0};
+    }
+
+    // Hill Climbing (greedy best-first with random restarts)
+    async function runHillClimbing(onStep) {
+      const h=(r,c)=>Math.abs(r-endPos.r)+Math.abs(c-endPos.c);
+      const visited=Array.from({length:ROWS},()=>Array(COLS).fill(false));
+      const parent=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+      let stack=[[startPos.r,startPos.c]];
+      visited[startPos.r][startPos.c]=true;
+      const explored=[];
+      while(stack.length) {
+        const [r,c]=stack.pop();
+        explored.push([r,c]);
+        if(r===endPos.r&&c===endPos.c) {
+          const path=reconstructPath(parent,endPos.r,endPos.c);
+          await onStep([...explored],[...path],true);
+          return {explored:explored.length, path:path.length};
+        }
+        await onStep([...explored],[],false);
+        const neighbors=[];
+        for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+          const nr=r+dr,nc=c+dc;
+          if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&!visited[nr][nc]&&grid[nr][nc]===EMPTY) {
+            visited[nr][nc]=true;
+            parent[nr][nc]=[r,c];
+            neighbors.push([h(nr,nc),nr,nc]);
+          }
+        }
+        neighbors.sort((a,b)=>b[0]-a[0]); // push worst first so best is popped first
+        for(const [,nr,nc] of neighbors) stack.push([nr,nc]);
+      }
+      await onStep([...explored],[],true);
+      return {explored:explored.length, path:0};
+    }
+
+    // Genetic Algorithm (simplified: evolve random paths toward goal)
+    async function runGenetic(onStep) {
+      const POP=60, GENS=120, DIRS=[[0,1],[0,-1],[1,0],[-1,0]];
+      const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+      const explored=new Set();
+      const exploredArr=[];
+
+      function randomChrom(len) {
+        return Array.from({length:len},()=>Math.floor(Math.random()*4));
+      }
+      function simulate(chrom) {
+        let r=startPos.r,c=startPos.c;
+        const path=[[r,c]];
+        const vis=new Set([r+','+c]);
+        for(const d of chrom) {
+          const [dr,dc]=DIRS[d];
+          const nr=clamp(r+dr,0,ROWS-1),nc=clamp(c+dc,0,COLS-1);
+          if(grid[nr][nc]!==WALL) { r=nr; c=nc; }
+          const k=r+','+c;
+          if(!vis.has(k)) { vis.add(k); path.push([r,c]); }
+        }
+        return {path,r,c};
+      }
+      function fitness({r,c}) {
+        return 1/(1+Math.abs(r-endPos.r)+Math.abs(c-endPos.c));
+      }
+      function crossover(a,b) {
+        const p=Math.floor(Math.random()*a.length);
+        return [...a.slice(0,p),...b.slice(p)];
+      }
+      function mutate(c,rate=0.12) {
+        return c.map(g=>Math.random()<rate?Math.floor(Math.random()*4):g);
+      }
+
+      const chromLen=COLS+ROWS;
+      let pop=Array.from({length:POP},()=>randomChrom(chromLen));
+
+      for(let gen=0;gen<GENS;gen++) {
+        const evaluated=pop.map(ch=>({ch,sim:simulate(ch)}));
+        evaluated.sort((a,b)=>fitness(b.sim)-fitness(a.sim));
+
+        // Add explored cells
+        for(const {sim} of evaluated.slice(0,10)) {
+          for(const [r,c] of sim.path) {
+            const k=r+','+c;
+            if(!explored.has(k)) { explored.add(k); exploredArr.push([r,c]); }
+          }
+        }
+        await onStep([...exploredArr],[],false);
+
+        // Check if any individual reached goal
+        const winner=evaluated.find(e=>e.sim.r===endPos.r&&e.sim.c===endPos.c);
+        if(winner) {
+          await onStep([...exploredArr],[...winner.sim.path],true);
+          return {explored:exploredArr.length, path:winner.sim.path.length};
+        }
+
+        // Evolve
+        const elite=evaluated.slice(0,POP*0.2).map(e=>e.ch);
+        const next=[...elite];
+        while(next.length<POP) {
+          const a=elite[Math.floor(Math.random()*elite.length)];
+          const b=elite[Math.floor(Math.random()*elite.length)];
+          next.push(mutate(crossover(a,b)));
+        }
+        pop=next;
+      }
+      await onStep([...exploredArr],[],true);
+      return {explored:exploredArr.length, path:0};
+    }
+
+    function reconstructPath(parent,r,c) {
+      const path=[];
+      let cur=[r,c];
+      while(cur) { path.unshift(cur); cur=parent[cur[0]][cur[1]]; }
+      return path;
+    }
+
+    // Stats UI
+    function updateStats(nodes, path, time, status) {
+      document.getElementById('statAlgo').textContent=ALGO_NAMES[selectedAlgo];
+      document.getElementById('statStatus').textContent=status;
+      document.getElementById('statNodes').textContent=nodes;
+      document.getElementById('statPath').textContent=path||'—';
+      document.getElementById('statTime').textContent=time?time+'ms':'—';
+    }
+
+    function updateCompare() {
+      const tbody=document.getElementById('compareBody');
+      const algos=['bfs','astar','hill','genetic'];
+      const names={bfs:'BFS',astar:'A*',hill:'Hill',genetic:'Genetic'};
+      tbody.innerHTML=algos.map(a=>{
+        const r=results[a];
+        return `<tr class="${r?'done':''}"><td>${names[a]}</td><td>${r?r.explored:'—'}</td><td>${r?r.path||'✗':'—'}</td><td>${r?r.time+'ms':'—'}</td></tr>`;
+      }).join('');
+    }
+
+    // Run
+    let stepDelay = 30;
+    function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+    async function runAlgorithm() {
+      if(running) return;
+      running=true;
+      document.getElementById('runBtn').disabled=true;
+
+      // Reset exploration visuals only
+      const cleanGrid=grid.map(r=>[...r]);
+      const startTime=performance.now();
+      let lastNodes=0;
+
+      const onStep=async(explored,path,done)=>{
+        lastNodes=explored.length;
+        draw(explored,path);
+        updateStats(explored.length, path.length>1?path.length:null, null, done?(path.length>1?'Found!':'No path'):'Searching...');
+        if(stepDelay>0) await sleep(stepDelay);
+      };
+
+      const algos={bfs:runBFS,astar:runAStar,hill:runHillClimbing,genetic:runGenetic};
+      const result=await algos[selectedAlgo](onStep);
+      const elapsed=Math.round(performance.now()-startTime);
+      results[selectedAlgo]={...result, time:elapsed};
+      updateStats(result.explored, result.path||null, elapsed, result.path>0?'Path Found!':'No Path Found');
+      updateCompare();
+
+      running=false;
+      document.getElementById('runBtn').disabled=false;
+    }
+
+    // Draw/drag on canvas
+    let drawing=false, drawMode=null, draggingStart=false, draggingEnd=false;
+
+    function getCell(e) {
+      const rect=canvas.getBoundingClientRect();
+      const scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
+      const x=(e.clientX-rect.left)*scaleX, y=(e.clientY-rect.top)*scaleY;
+      const c=Math.floor(x/CELL), r=Math.floor(y/CELL);
+      return {r,c};
+    }
+
+    canvas.addEventListener('mousedown',e=>{
+      const {r,c}=getCell(e);
+      if(r===startPos.r&&c===startPos.c) { draggingStart=true; return; }
+      if(r===endPos.r&&c===endPos.c) { draggingEnd=true; return; }
+      if(r<0||r>=ROWS||c<0||c>=COLS) return;
+      drawing=true;
+      drawMode=grid[r][c]===WALL?EMPTY:WALL;
+      if(grid[r][c]!==EMPTY||drawMode===WALL) { grid[r][c]=drawMode; draw(); }
+    });
+    canvas.addEventListener('mousemove',e=>{
+      const {r,c}=getCell(e);
+      if(r<0||r>=ROWS||c<0||c>=COLS) return;
+      if(draggingStart) { startPos={r,c}; draw(); return; }
+      if(draggingEnd) { endPos={r,c}; draw(); return; }
+      if(!drawing) return;
+      if((r===startPos.r&&c===startPos.c)||(r===endPos.r&&c===endPos.c)) return;
+      grid[r][c]=drawMode;
+      draw();
+    });
+    window.addEventListener('mouseup',()=>{ drawing=false; draggingStart=false; draggingEnd=false; });
+
+    // Buttons
+    document.querySelectorAll('.algo-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        if(running) return;
+        document.querySelectorAll('.algo-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedAlgo=btn.dataset.algo;
+        draw();
+      });
+    });
+    document.querySelectorAll('.speed-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.speed-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        stepDelay=parseInt(btn.dataset.speed);
+      });
+    });
+    document.getElementById('runBtn').addEventListener('click',runAlgorithm);
+    document.getElementById('resetBtn').addEventListener('click',()=>{
+      if(running) return;
+      generateMaze();
+      // re-carve same layout but clear exploration
+      draw();
+      updateStats(0,null,null,'Ready');
+    });
+    document.getElementById('newBtn').addEventListener('click',()=>{
+      if(running) return;
+      generateMaze();
+      draw();
+      updateStats(0,null,null,'Ready');
+      results={bfs:null,astar:null,hill:null,genetic:null};
+      updateCompare();
+    });
+
+    // Init
+    generateMaze();
+    resize();
+    updateStats(0,null,null,'Ready');
+    window.addEventListener('resize',resize);
+  </script>
+</body>
+</html>
