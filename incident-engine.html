@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Incident Automation Engine — Architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f; --bg2: #0d0d1a; --bg3: #111125;
+      --mint: #00ff87; --orange: #ff6b35; --blue: #38bdf8;
+      --purple: #a78bfa; --red: #ff4757; --yellow: #ffd32a;
+      --text: #f0eeff; --muted: #7b7a9a; --border: rgba(255,255,255,0.07);
+    }
+    html, body { min-height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; cursor: none; }
+
+    .cursor { position: fixed; width: 10px; height: 10px; background: var(--mint); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); mix-blend-mode: difference; }
+    .cursor-ring { position: fixed; width: 36px; height: 36px; border: 1.5px solid rgba(0,255,135,0.4); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: transform .25s ease; }
+
+    body::after { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:2000; opacity:.35; }
+
+    nav { display:flex; justify-content:space-between; align-items:center; padding:1.2rem 3rem; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(7,7,15,0.95); backdrop-filter:blur(16px); z-index:100; }
+    .nav-logo { font-family:'Syne',sans-serif; font-weight:800; color:var(--mint); font-size:1rem; text-decoration:none; }
+    .nav-back { font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--muted); text-decoration:none; letter-spacing:.1em; text-transform:uppercase; transition:color .2s; }
+    .nav-back:hover { color:var(--text); }
+
+    .hero { padding:3rem 3rem 2rem; }
+    .hero-tag { font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--orange); letter-spacing:.15em; text-transform:uppercase; margin-bottom:.75rem; display:flex; align-items:center; gap:.6rem; }
+    .hero-tag::before { content:''; width:24px; height:1px; background:var(--orange); }
+    .hero-title { font-family:'Syne',sans-serif; font-weight:800; font-size:clamp(2rem,5vw,3.5rem); letter-spacing:-.03em; margin-bottom:.75rem; }
+    .hero-title span { color:var(--mint); }
+    .hero-desc { color:var(--muted); font-size:.95rem; line-height:1.7; max-width:680px; }
+
+    /* Stats bar */
+    .stats-bar { display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin:0 3rem; }
+    .stat-item { padding:1.2rem 1.5rem; border-right:1px solid var(--border); }
+    .stat-item:last-child { border-right:none; }
+    .stat-num { font-family:'Syne',sans-serif; font-weight:800; font-size:1.8rem; color:var(--mint); letter-spacing:-.03em; line-height:1; }
+    .stat-label { font-family:'DM Mono',monospace; font-size:.65rem; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-top:.3rem; }
+
+    /* Main layout */
+    .main { display:grid; grid-template-columns:1fr 340px; gap:0; margin:2rem 3rem 3rem; border:1px solid var(--border); }
+
+    /* Diagram */
+    .diagram-panel { padding:2.5rem; background:var(--bg); overflow:hidden; }
+    .diagram-title { font-family:'DM Mono',monospace; font-size:.7rem; color:var(--muted); letter-spacing:.15em; text-transform:uppercase; margin-bottom:2rem; }
+
+    /* SVG diagram */
+    #arch-svg { width:100%; height:auto; }
+
+    /* Node styles */
+    .arch-node { cursor:none; }
+    .arch-node rect, .arch-node circle { transition:filter .2s; }
+    .arch-node:hover rect { filter:brightness(1.3); }
+    .arch-node:hover circle { filter:brightness(1.3); }
+    .arch-node.active rect { filter:brightness(1.5) drop-shadow(0 0 12px currentColor); }
+
+    /* Side panel */
+    .side-panel { background:var(--bg2); border-left:1px solid var(--border); display:flex; flex-direction:column; }
+
+    .detail-header { padding:1.5rem; border-bottom:1px solid var(--border); }
+    .detail-hint { font-family:'DM Mono',monospace; font-size:.7rem; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+    .detail-name { font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem; margin-top:.4rem; min-height:2rem; }
+    .detail-tag { display:inline-block; font-family:'DM Mono',monospace; font-size:.65rem; padding:.2rem .6rem; border-radius:2px; margin-top:.4rem; letter-spacing:.06em; text-transform:uppercase; }
+
+    .detail-body { padding:1.5rem; flex:1; overflow-y:auto; }
+    .detail-desc { font-size:.88rem; color:var(--muted); line-height:1.75; margin-bottom:1.5rem; min-height:4rem; }
+
+    .detail-section { margin-bottom:1.2rem; }
+    .detail-section-title { font-family:'DM Mono',monospace; font-size:.65rem; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-bottom:.6rem; }
+    .detail-tech-list { display:flex; flex-wrap:wrap; gap:.4rem; }
+    .tech-tag { font-family:'DM Mono',monospace; font-size:.7rem; padding:.25rem .6rem; border-radius:2px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); color:var(--text); }
+
+    .detail-metrics { display:flex; flex-direction:column; gap:.5rem; }
+    .metric-row { display:flex; justify-content:space-between; align-items:center; padding:.5rem .75rem; background:var(--bg); border-radius:2px; border:1px solid var(--border); }
+    .metric-key { font-size:.78rem; color:var(--muted); }
+    .metric-val { font-family:'DM Mono',monospace; font-size:.8rem; color:var(--mint); }
+
+    /* Flow animation control */
+    .flow-controls { padding:1rem 1.5rem; border-top:1px solid var(--border); display:flex; gap:.5rem; align-items:center; }
+    .flow-btn { font-family:'DM Mono',monospace; font-size:.7rem; padding:.5rem .9rem; border-radius:2px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:none; transition:all .2s; letter-spacing:.06em; text-transform:uppercase; }
+    .flow-btn:hover { border-color:var(--mint); color:var(--mint); }
+    .flow-btn.active { background:var(--mint); color:#000; border-color:var(--mint); font-weight:500; }
+    .flow-label { font-family:'DM Mono',monospace; font-size:.65rem; color:var(--muted); letter-spacing:.1em; margin-left:auto; }
+
+    /* Pulse dots on flow paths */
+    .flow-dot { animation: flowAnim 2s linear infinite; }
+    @keyframes flowAnim { 0% { offset-distance: 0%; opacity:1; } 80% { opacity:1; } 100% { offset-distance: 100%; opacity:0; } }
+
+    @media(max-width:900px) {
+      nav, .hero { padding-left:1.5rem; padding-right:1.5rem; }
+      .stats-bar { margin:0 1.5rem; grid-template-columns:repeat(2,1fr); }
+      .main { grid-template-columns:1fr; margin:1.5rem; }
+      .side-panel { border-left:none; border-top:1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <div class="cursor" id="cur"></div>
+  <div class="cursor-ring" id="curR"></div>
+
+  <nav>
+    <a href="index.html" class="nav-logo">JS</a>
+    <a href="index.html" class="nav-back">← Back to Portfolio</a>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-tag">System Architecture</div>
+    <h1 class="hero-title">Incident <span>Automation Engine</span></h1>
+    <p class="hero-desc">An event-driven distributed system that ingests production alerts, intelligently routes and deduplicates incidents, auto-creates and resolves tickets, and streams structured data to downstream consumers — eliminating manual triage on a high-availability critical path. Click any component to explore.</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-num">~0s</div><div class="stat-label">Ticket Creation Latency</div></div>
+    <div class="stat-item"><div class="stat-num">20+</div><div class="stat-label">Events Processed / Week</div></div>
+    <div class="stat-item"><div class="stat-num">30m</div><div class="stat-label">Manual Time Saved / Ticket</div></div>
+    <div class="stat-item"><div class="stat-num">99.9%</div><div class="stat-label">Uptime SLA</div></div>
+  </div>
+
+  <div class="main">
+    <div class="diagram-panel">
+      <div class="diagram-title">// System Architecture — click a component to inspect</div>
+      <svg id="arch-svg" viewBox="0 0 760 520" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Arrow markers -->
+          <marker id="arrow-mint" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#00ff87" opacity="0.7"/>
+          </marker>
+          <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#38bdf8" opacity="0.7"/>
+          </marker>
+          <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#ff6b35" opacity="0.7"/>
+          </marker>
+          <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#a78bfa" opacity="0.7"/>
+          </marker>
+          <!-- Glow filters -->
+          <filter id="glow-mint"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow-blue"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow-orange"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+
+        <!-- Background grid lines -->
+        <g opacity="0.04" stroke="#ffffff" stroke-width="0.5">
+          <line x1="0" y1="65" x2="760" y2="65"/>
+          <line x1="0" y1="195" x2="760" y2="195"/>
+          <line x1="0" y1="325" x2="760" y2="325"/>
+          <line x1="0" y1="455" x2="760" y2="455"/>
+        </g>
+
+        <!-- LAYER LABELS -->
+        <text x="14" y="48" font-family="DM Mono" font-size="9" fill="#7b7a9a" letter-spacing="2" text-anchor="start">SOURCES</text>
+        <text x="14" y="178" font-family="DM Mono" font-size="9" fill="#7b7a9a" letter-spacing="2" text-anchor="start">INGESTION</text>
+        <text x="14" y="308" font-family="DM Mono" font-size="9" fill="#7b7a9a" letter-spacing="2" text-anchor="start">PROCESSING</text>
+        <text x="14" y="438" font-family="DM Mono" font-size="9" fill="#7b7a9a" letter-spacing="2" text-anchor="start">CONSUMERS</text>
+
+        <!-- Layer backgrounds -->
+        <rect x="0" y="55" width="760" height="120" fill="rgba(0,255,135,0.02)" rx="0"/>
+        <rect x="0" y="185" width="760" height="120" fill="rgba(56,189,248,0.02)" rx="0"/>
+        <rect x="0" y="315" width="760" height="120" fill="rgba(255,107,53,0.02)" rx="0"/>
+        <rect x="0" y="445" width="760" height="70" fill="rgba(167,139,250,0.02)" rx="0"/>
+
+        <!-- === FLOW PATHS === -->
+        <!-- Sources → Event Bus -->
+        <path d="M 155 105 Q 155 145 280 145 Q 350 145 350 162" stroke="#00ff87" stroke-width="1.5" fill="none" stroke-dasharray="4,4" opacity="0.4" marker-end="url(#arrow-mint)" id="p1"/>
+        <path d="M 380 105 Q 380 135 380 162" stroke="#00ff87" stroke-width="1.5" fill="none" stroke-dasharray="4,4" opacity="0.4" marker-end="url(#arrow-mint)" id="p2"/>
+        <path d="M 605 105 Q 605 145 450 145 Q 415 145 415 162" stroke="#00ff87" stroke-width="1.5" fill="none" stroke-dasharray="4,4" opacity="0.4" marker-end="url(#arrow-mint)" id="p3"/>
+
+        <!-- Event Bus → Router -->
+        <path d="M 380 212 L 380 242" stroke="#38bdf8" stroke-width="2" fill="none" marker-end="url(#arrow-blue)" opacity="0.6" id="p4"/>
+
+        <!-- Router → Deduplication & Enrichment -->
+        <path d="M 330 268 Q 240 268 240 298" stroke="#38bdf8" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-blue)" id="p5"/>
+        <path d="M 430 268 Q 520 268 520 298" stroke="#38bdf8" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-blue)" id="p6"/>
+
+        <!-- Dedup → Ticket Engine -->
+        <path d="M 240 348 Q 240 375 310 378" stroke="#ff6b35" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-orange)" id="p7"/>
+        <!-- Enrichment → Ticket Engine -->
+        <path d="M 520 348 Q 520 375 450 378" stroke="#ff6b35" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-orange)" id="p8"/>
+
+        <!-- Ticket Engine → Consumers -->
+        <path d="M 330 408 Q 200 420 175 445" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-purple)" id="p9"/>
+        <path d="M 380 408 L 380 445" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-purple)" id="p10"/>
+        <path d="M 430 408 Q 560 420 585 445" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-purple)" id="p11"/>
+
+        <!-- Ticket Engine → Grafana (monitoring loop) -->
+        <path d="M 310 388 Q 100 388 100 260 Q 100 200 100 180 Q 100 115 120 105" stroke="#ffd32a" stroke-width="1" fill="none" stroke-dasharray="3,5" opacity="0.25" marker-end="url(#arrow-orange)"/>
+
+        <!-- === NODES === -->
+
+        <!-- SOURCE NODES -->
+        <!-- Monitoring Alerts -->
+        <g class="arch-node" data-id="monitoring" transform="translate(100,65)">
+          <rect width="110" height="44" rx="3" fill="#0d1a14" stroke="#00ff87" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#00ff87" opacity="0.8"/>
+          <text x="58" y="17" font-family="DM Mono" font-size="8.5" fill="#00ff87" text-anchor="middle" letter-spacing="0.5">MONITORING</text>
+          <text x="58" y="31" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Grafana Alerts</text>
+        </g>
+
+        <!-- System Events -->
+        <g class="arch-node" data-id="sysevents" transform="translate(325,65)">
+          <rect width="110" height="44" rx="3" fill="#0d1520" stroke="#38bdf8" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#38bdf8" opacity="0.8"/>
+          <text x="58" y="17" font-family="DM Mono" font-size="8.5" fill="#38bdf8" text-anchor="middle" letter-spacing="0.5">SYSTEM</text>
+          <text x="58" y="31" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Service Events</text>
+        </g>
+
+        <!-- Health Checks -->
+        <g class="arch-node" data-id="healthcheck" transform="translate(550,65)">
+          <rect width="110" height="44" rx="3" fill="#1a0d14" stroke="#ff4757" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#ff4757" opacity="0.8"/>
+          <text x="58" y="17" font-family="DM Mono" font-size="8.5" fill="#ff4757" text-anchor="middle" letter-spacing="0.5">HEALTH</text>
+          <text x="58" y="31" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Service Checks</text>
+        </g>
+
+        <!-- INGESTION LAYER -->
+        <!-- Event Bus -->
+        <g class="arch-node" data-id="eventbus" transform="translate(290,165)">
+          <rect width="180" height="50" rx="3" fill="#0a1520" stroke="#38bdf8" stroke-width="1.8" opacity="0.95"/>
+          <rect width="180" height="3" rx="1" fill="#38bdf8" opacity="0.7" y="0"/>
+          <text x="90" y="23" font-family="DM Mono" font-size="9.5" fill="#38bdf8" text-anchor="middle" letter-spacing="1">EVENT BUS</text>
+          <text x="90" y="39" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Message Queue / Pub-Sub</text>
+        </g>
+
+        <!-- PROCESSING LAYER -->
+        <!-- Router -->
+        <g class="arch-node" data-id="router" transform="translate(300,245)">
+          <rect width="160" height="50" rx="3" fill="#0a1520" stroke="#38bdf8" stroke-width="1.5" opacity="0.9"/>
+          <rect width="160" height="3" rx="1" fill="#38bdf8" opacity="0.5" y="0"/>
+          <text x="80" y="23" font-family="DM Mono" font-size="9.5" fill="#38bdf8" text-anchor="middle" letter-spacing="1">ROUTER</text>
+          <text x="80" y="39" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Rule-Based Dispatch</text>
+        </g>
+
+        <!-- Deduplication -->
+        <g class="arch-node" data-id="dedup" transform="translate(175,298)">
+          <rect width="130" height="50" rx="3" fill="#0d1a14" stroke="#00ff87" stroke-width="1.3" opacity="0.9"/>
+          <rect width="130" height="3" rx="1" fill="#00ff87" opacity="0.5" y="0"/>
+          <text x="65" y="22" font-family="DM Mono" font-size="8.5" fill="#00ff87" text-anchor="middle" letter-spacing="0.5">DEDUP ENGINE</text>
+          <text x="65" y="37" font-family="Inter" font-size="8.5" fill="#7b7a9a" text-anchor="middle">Noise Reduction</text>
+        </g>
+
+        <!-- Enrichment -->
+        <g class="arch-node" data-id="enrichment" transform="translate(455,298)">
+          <rect width="130" height="50" rx="3" fill="#130d1a" stroke="#a78bfa" stroke-width="1.3" opacity="0.9"/>
+          <rect width="130" height="3" rx="1" fill="#a78bfa" opacity="0.5" y="0"/>
+          <text x="65" y="22" font-family="DM Mono" font-size="8.5" fill="#a78bfa" text-anchor="middle" letter-spacing="0.5">ENRICHMENT</text>
+          <text x="65" y="37" font-family="Inter" font-size="8.5" fill="#7b7a9a" text-anchor="middle">Context Injection</text>
+        </g>
+
+        <!-- Ticket Engine (central) -->
+        <g class="arch-node" data-id="ticketengine" transform="translate(280,358)">
+          <rect width="200" height="52" rx="3" fill="#1a100d" stroke="#ff6b35" stroke-width="2" opacity="0.97"/>
+          <rect width="200" height="4" rx="1" fill="#ff6b35" opacity="0.8" y="0"/>
+          <text x="100" y="25" font-family="DM Mono" font-size="10" fill="#ff6b35" text-anchor="middle" letter-spacing="1.5">TICKET ENGINE</text>
+          <text x="100" y="41" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Create · Route · Resolve · Notify</text>
+        </g>
+
+        <!-- CONSUMER LAYER -->
+        <!-- Ticketing System -->
+        <g class="arch-node" data-id="ticketsys" transform="translate(110,448)">
+          <rect width="130" height="44" rx="3" fill="#130d1a" stroke="#a78bfa" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#a78bfa" opacity="0.7"/>
+          <text x="68" y="18" font-family="DM Mono" font-size="8.5" fill="#a78bfa" text-anchor="middle" letter-spacing="0.5">TICKETING</text>
+          <text x="68" y="32" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Internal Ticket System</text>
+        </g>
+
+        <!-- Data Pipeline -->
+        <g class="arch-node" data-id="pipeline" transform="translate(315,448)">
+          <rect width="130" height="44" rx="3" fill="#0a1520" stroke="#38bdf8" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#38bdf8" opacity="0.7"/>
+          <text x="68" y="18" font-family="DM Mono" font-size="8.5" fill="#38bdf8" text-anchor="middle" letter-spacing="0.5">DATA STREAM</text>
+          <text x="68" y="32" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Real-time Pipeline</text>
+        </g>
+
+        <!-- Notification -->
+        <g class="arch-node" data-id="notification" transform="translate(520,448)">
+          <rect width="130" height="44" rx="3" fill="#0d1a14" stroke="#00ff87" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#00ff87" opacity="0.7"/>
+          <text x="68" y="18" font-family="DM Mono" font-size="8.5" fill="#00ff87" text-anchor="middle" letter-spacing="0.5">NOTIFICATIONS</text>
+          <text x="68" y="32" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">On-call Alerts</text>
+        </g>
+
+        <!-- Animated flow dots -->
+        <g id="flow-dots"></g>
+
+      </svg>
+    </div>
+
+    <!-- Side Panel -->
+    <div class="side-panel">
+      <div class="detail-header">
+        <div class="detail-hint">// Select a component</div>
+        <div class="detail-name" id="detailName">—</div>
+        <div id="detailTag"></div>
+      </div>
+      <div class="detail-body">
+        <p class="detail-desc" id="detailDesc">Click any component in the architecture diagram to see its role, technology stack, and key metrics.</p>
+        <div id="detailTechSection" style="display:none">
+          <div class="detail-section">
+            <div class="detail-section-title">Technologies</div>
+            <div class="detail-tech-list" id="detailTech"></div>
+          </div>
+        </div>
+        <div id="detailMetricsSection" style="display:none">
+          <div class="detail-section">
+            <div class="detail-section-title">Key Metrics</div>
+            <div class="detail-metrics" id="detailMetrics"></div>
+          </div>
+        </div>
+      </div>
+      <div class="flow-controls">
+        <button class="flow-btn active" id="flowToggle">⏸ Pause Flow</button>
+        <span class="flow-label" id="flowLabel">Events flowing</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Cursor
+    document.addEventListener('mousemove',e=>{
+      document.getElementById('cur').style.cssText=`left:${e.clientX}px;top:${e.clientY}px`;
+      setTimeout(()=>{document.getElementById('curR').style.cssText=`left:${e.clientX}px;top:${e.clientY}px`;},80);
+    });
+
+    // Component data
+    const components = {
+      monitoring: {
+        name: 'Monitoring Alerts',
+        tag: 'Source Layer',
+        tagColor: '#00ff87',
+        desc: 'Grafana-based monitoring system that watches service health metrics, latency thresholds, and error rates. When a threshold is breached, an alert event is fired into the event bus. This is the primary trigger source for production incidents.',
+        tech: ['Grafana', 'Prometheus', 'Python', 'Webhooks'],
+        metrics: [{ k: 'Alert Sources', v: '12+ services' }, { k: 'Check Interval', v: '30s' }, { k: 'Avg Trigger Rate', v: '~20/week' }]
+      },
+      sysevents: {
+        name: 'System Events',
+        tag: 'Source Layer',
+        tagColor: '#38bdf8',
+        desc: 'Internal service event stream emitted by platform services when state changes occur — deployments, pod restarts, config changes, health state transitions. Events are structured as JSON payloads with service metadata, severity, and timestamp.',
+        tech: ['Kubernetes Events', 'Python', 'JSON', 'REST APIs'],
+        metrics: [{ k: 'Event Types', v: '8 categories' }, { k: 'Payload Format', v: 'JSON' }, { k: 'Delivery', v: 'At-least-once' }]
+      },
+      healthcheck: {
+        name: 'Health Checks',
+        tag: 'Source Layer',
+        tagColor: '#ff4757',
+        desc: 'Periodic liveness and readiness probe results from Kubernetes and internal health endpoints. Failed probes are translated into structured health events and injected into the pipeline. Critical for detecting silent failures that don\'t generate explicit alerts.',
+        tech: ['Kubernetes Probes', 'HTTP Health APIs', 'Python', 'Bash'],
+        metrics: [{ k: 'Probe Frequency', v: 'Every 60s' }, { k: 'Services Monitored', v: '40+' }, { k: 'Failure Threshold', v: '3 consecutive' }]
+      },
+      eventbus: {
+        name: 'Event Bus',
+        tag: 'Ingestion Layer',
+        tagColor: '#38bdf8',
+        desc: 'Central pub-sub message queue that decouples event producers from consumers. All incoming events from monitoring, system, and health sources are published here. Consumers subscribe to relevant event topics. Provides buffering, ordering guarantees, and retry semantics to handle spikes without losing events.',
+        tech: ['Message Queue', 'Pub-Sub Pattern', 'Python', 'Async I/O'],
+        metrics: [{ k: 'Architecture', v: 'Pub-Sub' }, { k: 'Delivery', v: 'At-least-once' }, { k: 'Max Throughput', v: 'High' }]
+      },
+      router: {
+        name: 'Routing Engine',
+        tag: 'Processing Layer',
+        tagColor: '#38bdf8',
+        desc: 'Rule-based dispatcher that classifies incoming events by type, severity, and service ownership. Routes events to the appropriate downstream handlers — deduplication for noisy/repeated events, enrichment for new incidents. Built with a configurable rules engine so routing logic can be updated without code deploys.',
+        tech: ['Python', 'Rules Engine', 'Config-Driven', 'Pattern Matching'],
+        metrics: [{ k: 'Routing Rules', v: '25+ active' }, { k: 'Classification Accuracy', v: '>99%' }, { k: 'Routing Latency', v: '<10ms' }]
+      },
+      dedup: {
+        name: 'Deduplication Engine',
+        tag: 'Processing Layer',
+        tagColor: '#00ff87',
+        desc: 'Identifies and suppresses duplicate or redundant events within a configurable time window. Without deduplication, a single flapping service could generate hundreds of tickets in minutes. Uses fingerprinting on event signatures (service + type + severity) to collapse repeated events into a single incident record.',
+        tech: ['Python', 'Fingerprinting', 'TTL Windows', 'In-Memory Cache'],
+        metrics: [{ k: 'Noise Reduction', v: '60-80%' }, { k: 'Dedup Window', v: '5 minutes' }, { k: 'False Positive Rate', v: '<1%' }]
+      },
+      enrichment: {
+        name: 'Enrichment Service',
+        tag: 'Processing Layer',
+        tagColor: '#a78bfa',
+        desc: 'Annotates raw incident events with additional context before they reach the ticket engine. Pulls service ownership data, on-call schedules, past incident history, and runbook links. This context is embedded in the ticket so on-call engineers have everything they need without manual research.',
+        tech: ['Python', 'Internal APIs', 'Service Registry', 'Runbook Index'],
+        metrics: [{ k: 'Context Fields Added', v: '8-12 per event' }, { k: 'Enrichment Sources', v: '4 internal APIs' }, { k: 'Latency Added', v: '<50ms' }]
+      },
+      ticketengine: {
+        name: 'Ticket Engine',
+        tag: 'Core Service',
+        tagColor: '#ff6b35',
+        desc: 'The heart of the system. Receives enriched, deduplicated incidents and handles the full ticket lifecycle: creation with pre-populated context, intelligent routing to the right team, status tracking, and auto-resolution when the underlying issue clears. Eliminated ~30 minutes of manual work per ticket.',
+        tech: ['Python', 'Ticketing APIs', 'State Machine', 'Kubernetes', 'Terraform'],
+        metrics: [{ k: 'Ticket Creation Time', v: '~0 seconds' }, { k: 'Previous Manual Time', v: '~30 min/ticket' }, { k: 'Auto-resolution Rate', v: '~70%' }, { k: 'Uptime', v: '99.9%' }]
+      },
+      ticketsys: {
+        name: 'Ticketing System',
+        tag: 'Consumer Layer',
+        tagColor: '#a78bfa',
+        desc: 'The primary output destination. Tickets are created with full context — severity, service owner, enriched metadata, runbook links, and suggested resolution steps. Engineers arriving for on-call shifts see fully populated tickets rather than raw alert dumps.',
+        tech: ['Ticketing APIs', 'REST', 'Webhooks', 'JSON'],
+        metrics: [{ k: 'Tickets Auto-Created', v: '20+/week' }, { k: 'Context Fields', v: '10+ per ticket' }, { k: 'Manual Intervention', v: 'Near zero' }]
+      },
+      pipeline: {
+        name: 'Real-time Data Stream',
+        tag: 'Consumer Layer',
+        tagColor: '#38bdf8',
+        desc: 'Structured incident data is streamed to internal consumers in real time — dashboards, analytics pipelines, and SRE tooling. Events are transformed and serialized as they flow through, enabling downstream teams to build their own tooling on top of the incident data without direct system access.',
+        tech: ['Python', 'Streaming', 'Kafka-style', 'JSON Transforms'],
+        metrics: [{ k: 'Downstream Consumers', v: '3 teams' }, { k: 'Data Freshness', v: 'Real-time' }, { k: 'Format', v: 'Structured JSON' }]
+      },
+      notification: {
+        name: 'Notification Service',
+        tag: 'Consumer Layer',
+        tagColor: '#00ff87',
+        desc: 'Routes alerts to on-call engineers via the appropriate channel based on severity and time of day. Critical incidents trigger immediate pager alerts; lower-severity events go to team Slack channels. Respects on-call rotation schedules to avoid notifying off-duty engineers.',
+        tech: ['Python', 'Pagerduty-style', 'Slack APIs', 'On-call Schedules'],
+        metrics: [{ k: 'Alert Channels', v: 'Pager + Slack' }, { k: 'Escalation Levels', v: '3 tiers' }, { k: 'MTTA Improvement', v: '~40%' }]
+      }
+    };
+
+    // Node click
+    document.querySelectorAll('.arch-node').forEach(node => {
+      node.addEventListener('click', () => {
+        const id = node.dataset.id;
+        const data = components[id];
+        if (!data) return;
+
+        // Update active state
+        document.querySelectorAll('.arch-node').forEach(n => n.classList.remove('active'));
+        node.classList.add('active');
+
+        document.getElementById('detailName').textContent = data.name;
+
+        const tag = document.getElementById('detailTag');
+        tag.textContent = data.tag;
+        tag.className = 'detail-tag';
+        tag.style.background = data.tagColor + '22';
+        tag.style.color = data.tagColor;
+        tag.style.border = `1px solid ${data.tagColor}44`;
+
+        document.getElementById('detailDesc').textContent = data.desc;
+
+        const techSection = document.getElementById('detailTechSection');
+        const techList = document.getElementById('detailTech');
+        techList.innerHTML = data.tech.map(t => `<span class="tech-tag">${t}</span>`).join('');
+        techSection.style.display = 'block';
+
+        const metricsSection = document.getElementById('detailMetricsSection');
+        const metricsList = document.getElementById('detailMetrics');
+        metricsList.innerHTML = data.metrics.map(m =>
+          `<div class="metric-row"><span class="metric-key">${m.k}</span><span class="metric-val">${m.v}</span></div>`
+        ).join('');
+        metricsSection.style.display = 'block';
+      });
+    });
+
+    // Animated flow dots
+    const paths = ['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10','p11'];
+    const dotColors = {
+      p1:'#00ff87', p2:'#38bdf8', p3:'#ff4757',
+      p4:'#38bdf8',
+      p5:'#38bdf8', p6:'#38bdf8',
+      p7:'#ff6b35', p8:'#ff6b35',
+      p9:'#a78bfa', p10:'#38bdf8', p11:'#00ff87'
+    };
+
+    let flowActive = true;
+    const flowDots = [];
+
+    function createDot(pathId, delay) {
+      const pathEl = document.getElementById(pathId);
+      if (!pathEl) return;
+      const len = pathEl.getTotalLength();
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('r', '3.5');
+      dot.setAttribute('fill', dotColors[pathId] || '#00ff87');
+      dot.setAttribute('opacity', '0.9');
+      dot.style.filter = `drop-shadow(0 0 4px ${dotColors[pathId]})`;
+      document.getElementById('flow-dots').appendChild(dot);
+
+      let start = null;
+      const duration = 1800 + Math.random() * 800;
+
+      function animate(ts) {
+        if (!start) start = ts + delay;
+        const elapsed = ts - start;
+        if (elapsed < 0) { requestAnimationFrame(animate); return; }
+        const t = (elapsed % duration) / duration;
+        const opacity = t > 0.85 ? 1 - (t - 0.85) / 0.15 : 1;
+        const pt = pathEl.getPointAtLength(t * len);
+        dot.setAttribute('cx', pt.x);
+        dot.setAttribute('cy', pt.y);
+        dot.setAttribute('opacity', flowActive ? opacity * 0.9 : 0);
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+      flowDots.push(dot);
+    }
+
+    // Create multiple dots per path with staggered delays
+    paths.forEach(pid => {
+      const count = pid === 'p4' ? 3 : 2;
+      for (let i = 0; i < count; i++) {
+        createDot(pid, i * (1800 / count));
+      }
+    });
+
+    // Flow toggle
+    const flowToggle = document.getElementById('flowToggle');
+    const flowLabel = document.getElementById('flowLabel');
+    flowToggle.addEventListener('click', () => {
+      flowActive = !flowActive;
+      flowToggle.textContent = flowActive ? '⏸ Pause Flow' : '▶ Resume Flow';
+      flowToggle.classList.toggle('active', flowActive);
+      flowLabel.textContent = flowActive ? 'Events flowing' : 'Flow paused';
+    });
+  </script>
+</body>
+</html>
