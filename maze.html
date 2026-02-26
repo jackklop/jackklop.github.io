@@ -429,76 +429,110 @@
       return {explored:explored.length, path:0};
     }
 
-    // Genetic Algorithm (simplified: evolve random paths toward goal)
-    async function runGenetic(onStep) {
-      const POP=60, GENS=120, DIRS=[[0,1],[0,-1],[1,0],[-1,0]];
-      const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
-      const explored=new Set();
-      const exploredArr=[];
+async function runGenetic(onStep) {
+  const POP = 100, GENS = 250, DIRS = [[0,1],[0,-1],[1,0],[-1,0]];
+  const clamp = (v,lo,hi) => Math.max(lo, Math.min(hi, v));
+  const explored = new Set();
+  const exploredArr = [];
 
-      function randomChrom(len) {
-        return Array.from({length:len},()=>Math.floor(Math.random()*4));
-      }
-      function simulate(chrom) {
-        let r=startPos.r,c=startPos.c;
-        const path=[[r,c]];
-        const vis=new Set([r+','+c]);
-        for(const d of chrom) {
-          const [dr,dc]=DIRS[d];
-          const nr=clamp(r+dr,0,ROWS-1),nc=clamp(c+dc,0,COLS-1);
-          if(grid[nr][nc]!==WALL) { r=nr; c=nc; }
-          const k=r+','+c;
-          if(!vis.has(k)) { vis.add(k); path.push([r,c]); }
-        }
-        return {path,r,c};
-      }
-      function fitness({r,c}) {
-        return 1/(1+Math.abs(r-endPos.r)+Math.abs(c-endPos.c));
-      }
-      function crossover(a,b) {
-        const p=Math.floor(Math.random()*a.length);
-        return [...a.slice(0,p),...b.slice(p)];
-      }
-      function mutate(c,rate=0.12) {
-        return c.map(g=>Math.random()<rate?Math.floor(Math.random()*4):g);
-      }
+  // KEY FIX: chromosome needs to be long enough to traverse winding maze corridors
+  const chromLen = Math.floor(COLS * ROWS * 0.6); // ~428 steps instead of 54
 
-      const chromLen=COLS+ROWS;
-      let pop=Array.from({length:POP},()=>randomChrom(chromLen));
+  function randomChrom(len) {
+    return Array.from({length: len}, () => Math.floor(Math.random() * 4));
+  }
 
-      for(let gen=0;gen<GENS;gen++) {
-        const evaluated=pop.map(ch=>({ch,sim:simulate(ch)}));
-        evaluated.sort((a,b)=>fitness(b.sim)-fitness(a.sim));
-
-        // Add explored cells
-        for(const {sim} of evaluated.slice(0,10)) {
-          for(const [r,c] of sim.path) {
-            const k=r+','+c;
-            if(!explored.has(k)) { explored.add(k); exploredArr.push([r,c]); }
-          }
-        }
-        await onStep([...exploredArr],[],false);
-
-        // Check if any individual reached goal
-        const winner=evaluated.find(e=>e.sim.r===endPos.r&&e.sim.c===endPos.c);
-        if(winner) {
-          await onStep([...exploredArr],[...winner.sim.path],true);
-          return {explored:exploredArr.length, path:winner.sim.path.length};
-        }
-
-        // Evolve
-        const elite=evaluated.slice(0,POP*0.2).map(e=>e.ch);
-        const next=[...elite];
-        while(next.length<POP) {
-          const a=elite[Math.floor(Math.random()*elite.length)];
-          const b=elite[Math.floor(Math.random()*elite.length)];
-          next.push(mutate(crossover(a,b)));
-        }
-        pop=next;
-      }
-      await onStep([...exploredArr],[],true);
-      return {explored:exploredArr.length, path:0};
+  function simulate(chrom) {
+    let r = startPos.r, c = startPos.c;
+    const path = [[r, c]];
+    const vis = new Set([r + ',' + c]);
+    for (const d of chrom) {
+      const [dr, dc] = DIRS[d];
+      const nr = clamp(r+dr, 0, ROWS-1), nc = clamp(c+dc, 0, COLS-1);
+      if (grid[nr][nc] !== WALL) { r = nr; c = nc; }
+      const k = r + ',' + c;
+      if (!vis.has(k)) { vis.add(k); path.push([r, c]); }
+      // Early exit if goal reached
+      if (r === endPos.r && c === endPos.c) break;
     }
+    return { path, r, c, visited: vis.size };
+  }
+
+  // Better fitness: closer to goal + reward more unique cells visited (exploration)
+  function fitness(sim) {
+    const dist = Math.abs(sim.r - endPos.r) + Math.abs(sim.c - endPos.c);
+    const explorationBonus = sim.visited * 0.01;
+    return (1 / (1 + dist)) + explorationBonus;
+  }
+
+  function crossover(a, b) {
+    // Two-point crossover for more variety
+    const p1 = Math.floor(Math.random() * a.length);
+    const p2 = Math.floor(Math.random() * a.length);
+    const lo = Math.min(p1, p2), hi = Math.max(p1, p2);
+    return [...a.slice(0, lo), ...b.slice(lo, hi), ...a.slice(hi)];
+  }
+
+  function mutate(chrom, rate) {
+    return chrom.map(g => Math.random() < rate ? Math.floor(Math.random() * 4) : g);
+  }
+
+  let pop = Array.from({length: POP}, () => randomChrom(chromLen));
+  let bestFitnessSoFar = -Infinity;
+  let stuckCount = 0;
+
+  for (let gen = 0; gen < GENS; gen++) {
+    const evaluated = pop.map(ch => ({ ch, sim: simulate(ch) }));
+    evaluated.sort((a, b) => fitness(b.sim) - fitness(a.sim));
+
+    const topFitness = fitness(evaluated[0].sim);
+    if (topFitness <= bestFitnessSoFar) {
+      stuckCount++;
+    } else {
+      bestFitnessSoFar = topFitness;
+      stuckCount = 0;
+    }
+
+    // Adaptive mutation: increase when stuck
+    const mutRate = stuckCount > 10 ? 0.25 : 0.1;
+
+    // Add explored cells from top individuals
+    for (const { sim } of evaluated.slice(0, 15)) {
+      for (const [r, c] of sim.path) {
+        const k = r + ',' + c;
+        if (!explored.has(k)) { explored.add(k); exploredArr.push([r, c]); }
+      }
+    }
+
+    await onStep([...exploredArr], [], false);
+
+    // Check if any individual reached the goal
+    const winner = evaluated.find(e => e.sim.r === endPos.r && e.sim.c === endPos.c);
+    if (winner) {
+      await onStep([...exploredArr], [...winner.sim.path], true);
+      return { explored: exploredArr.length, path: winner.sim.path.length };
+    }
+
+    // Evolve: keep top 25%, fill rest with crossover + mutation
+    const eliteCount = Math.floor(POP * 0.25);
+    const elite = evaluated.slice(0, eliteCount).map(e => e.ch);
+    const next = [...elite];
+
+    // Inject some fresh random chromosomes if stuck to escape local optima
+    const freshCount = stuckCount > 15 ? Math.floor(POP * 0.2) : 2;
+    for (let i = 0; i < freshCount; i++) next.push(randomChrom(chromLen));
+
+    while (next.length < POP) {
+      const a = elite[Math.floor(Math.random() * elite.length)];
+      const b = elite[Math.floor(Math.random() * elite.length)];
+      next.push(mutate(crossover(a, b), mutRate));
+    }
+    pop = next.slice(0, POP);
+  }
+
+  await onStep([...exploredArr], [], true);
+  return { explored: exploredArr.length, path: 0 };
+}
 
     function reconstructPath(parent,r,c) {
       const path=[];
