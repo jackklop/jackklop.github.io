@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>DUPE — Social Deduction Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #080808; }
+    body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+    #game-root { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="game-root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+
+const FONT_URL = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap";
+
+const WORD_PACKS = [
+  // FOOD
+  { category: "FOOD", word: "PIZZA", decoys: ["LASAGNA", "PASTA", "BREADSTICKS"] },
+  { category: "FOOD", word: "SUSHI", decoys: ["DUMPLINGS", "SPRING ROLL", "RICE BOWL"] },
+  { category: "FOOD", word: "BURGER", decoys: ["HOT DOG", "MEATBALL SUB", "KEBAB"] },
+  { category: "FOOD", word: "TACO", decoys: ["EMPANADA", "TAMALE", "NACHOS"] },
+  { category: "FOOD", word: "CROISSANT", decoys: ["BAGEL", "MUFFIN", "PANCAKE"] },
+  { category: "FOOD", word: "RAMEN", decoys: ["FRIED RICE", "SOUP DUMPLING", "CONGEE"] },
+  { category: "FOOD", word: "ICE CREAM", decoys: ["PUDDING", "CHEESECAKE", "MOUSSE"] },
+  { category: "FOOD", word: "STEAK", decoys: ["LAMB CHOP", "PORK RIBS", "ROAST CHICKEN"] },
+  { category: "FOOD", word: "SPAGHETTI", decoys: ["RISOTTO", "GNOCCHI", "RAVIOLI"] },
+  { category: "FOOD", word: "FRIED CHICKEN", decoys: ["FISH FINGERS", "CHICKEN NUGGETS", "PORK SCHNITZEL"] },
+  { category: "FOOD", word: "PANCAKES", decoys: ["FRENCH TOAST", "WAFFLES", "CREPES"] },
+  { category: "FOOD", word: "CHEESECAKE", decoys: ["TIRAMISU", "BROWNIE", "CREME BRULEE"] },
+  { category: "FOOD", word: "NACHOS", decoys: ["POTATO SKINS", "ONION RINGS", "LOADED FRIES"] },
+  { category: "FOOD", word: "LOBSTER", decoys: ["CRAB LEGS", "OYSTERS", "CLAM CHOWDER"] },
+
+  // DRINKS
+  { category: "DRINKS", word: "COFFEE", decoys: ["KOMBUCHA", "GREEN TEA", "HOT CHOCOLATE"] },
+  { category: "DRINKS", word: "CHAMPAGNE", decoys: ["SANGRIA", "MOJITO", "MARGARITA"] },
+  { category: "DRINKS", word: "SMOOTHIE", decoys: ["MILKSHAKE", "ICED TEA", "LEMONADE"] },
+  { category: "DRINKS", word: "WHISKEY", decoys: ["GIN", "TEQUILA", "VODKA"] },
+  { category: "DRINKS", word: "BEER", decoys: ["HARD CIDER", "MEAD", "SAKE"] },
+
+  // ANIMALS
+  { category: "ANIMALS", word: "LION", decoys: ["GRIZZLY BEAR", "GORILLA", "CROCODILE"] },
+  { category: "ANIMALS", word: "PENGUIN", decoys: ["SEAL", "POLAR BEAR", "WALRUS"] },
+  { category: "ANIMALS", word: "SHARK", decoys: ["PIRANHA", "ELECTRIC EEL", "GIANT SQUID"] },
+  { category: "ANIMALS", word: "ELEPHANT", decoys: ["GIRAFFE", "HIPPO", "CAMEL"] },
+  { category: "ANIMALS", word: "PARROT", decoys: ["FLAMINGO", "PELICAN", "PEACOCK"] },
+  { category: "ANIMALS", word: "WOLF", decoys: ["HYENA", "DINGO", "COYOTE"] },
+  { category: "ANIMALS", word: "OCTOPUS", decoys: ["JELLYFISH", "SEA TURTLE", "STARFISH"] },
+  { category: "ANIMALS", word: "CHIMPANZEE", decoys: ["BABOON", "ORANGUTAN", "LEMUR"] },
+  { category: "ANIMALS", word: "EAGLE", decoys: ["VULTURE", "HAWK", "CONDOR"] },
+  { category: "ANIMALS", word: "COBRA", decoys: ["IGUANA", "KOMODO DRAGON", "CHAMELEON"] },
+
+  // SPORTS
+  { category: "SPORTS", word: "FOOTBALL", decoys: ["WATER POLO", "LACROSSE", "HURLING"] },
+  { category: "SPORTS", word: "BASKETBALL", decoys: ["VOLLEYBALL", "HANDBALL", "POLO"] },
+  { category: "SPORTS", word: "GOLF", decoys: ["CROQUET", "ARCHERY", "CURLING"] },
+  { category: "SPORTS", word: "BOXING", decoys: ["FENCING", "SUMO", "KABADDI"] },
+  { category: "SPORTS", word: "SURFING", decoys: ["PARAGLIDING", "SKIING", "BOBSLED"] },
+  { category: "SPORTS", word: "TENNIS", decoys: ["BADMINTON", "SQUASH", "PING PONG"] },
+  { category: "SPORTS", word: "WRESTLING", decoys: ["JUDO", "KARATE", "TAEKWONDO"] },
+  { category: "SPORTS", word: "CYCLING", decoys: ["TRIATHLON", "MARATHON", "ROWING"] },
+
+  // NATURE
+  { category: "NATURE", word: "VOLCANO", decoys: ["GLACIER", "CANYON", "SAND DUNE"] },
+  { category: "NATURE", word: "RAINFOREST", decoys: ["SAVANNA", "TUNDRA", "WETLAND"] },
+  { category: "NATURE", word: "AVALANCHE", decoys: ["TORNADO", "TSUNAMI", "WILDFIRE"] },
+  { category: "NATURE", word: "CORAL REEF", decoys: ["MANGROVE", "SALT FLAT", "HOT SPRING"] },
+  { category: "NATURE", word: "NORTHERN LIGHTS", decoys: ["SOLAR ECLIPSE", "METEOR SHOWER", "RAINBOW"] },
+  { category: "NATURE", word: "WATERFALL", decoys: ["GEYSER", "RIVER DELTA", "LAGOON"] },
+
+  // TECH
+  { category: "TECH", word: "IPHONE", decoys: ["SMART WATCH", "LAPTOP", "GAMING CONSOLE"] },
+  { category: "TECH", word: "NETFLIX", decoys: ["SPOTIFY", "YOUTUBE", "TWITCH"] },
+  { category: "TECH", word: "GOOGLE", decoys: ["AMAZON", "FACEBOOK", "TWITTER"] },
+  { category: "TECH", word: "BITCOIN", decoys: ["PAYPAL", "VENMO", "STOCK MARKET"] },
+  { category: "TECH", word: "TESLA", decoys: ["SPACEX", "BOEING", "NASA"] },
+  { category: "TECH", word: "ROBOT", decoys: ["DRONE", "3D PRINTER", "VR HEADSET"] },
+  { category: "TECH", word: "WIFI", decoys: ["BLUETOOTH", "5G", "SATELLITE"] },
+
+  // PLACES
+  { category: "PLACES", word: "PARIS", decoys: ["AMSTERDAM", "BARCELONA", "LISBON"] },
+  { category: "PLACES", word: "TOKYO", decoys: ["BANGKOK", "SINGAPORE", "MUMBAI"] },
+  { category: "PLACES", word: "NEW YORK", decoys: ["TORONTO", "SYDNEY", "SAO PAULO"] },
+  { category: "PLACES", word: "SAHARA", decoys: ["AMAZON RIVER", "HIMALAYA", "ANTARTICA"] },
+  { category: "PLACES", word: "LAS VEGAS", decoys: ["IBIZA", "MIAMI BEACH", "MACAO"] },
+  { category: "PLACES", word: "MOUNT EVEREST", decoys: ["GRAND CANYON", "DEAD SEA", "VICTORIA FALLS"] },
+  { category: "PLACES", word: "VENICE", decoys: ["DUBROVNIK", "SANTORINI", "MARRAKECH"] },
+
+  // MOVIES
+  { category: "MOVIES", word: "TITANIC", decoys: ["CAST AWAY", "GRAVITY", "THE REVENANT"] },
+  { category: "MOVIES", word: "THE MATRIX", decoys: ["BLADE RUNNER", "MINORITY REPORT", "INTERSTELLAR"] },
+  { category: "MOVIES", word: "JURASSIC PARK", decoys: ["KING KONG", "JAWS", "CLOVERFIELD"] },
+  { category: "MOVIES", word: "AVENGERS", decoys: ["TRANSFORMERS", "G.I. JOE", "POWER RANGERS"] },
+  { category: "MOVIES", word: "THE GODFATHER", decoys: ["SCARFACE", "GOODFELLAS", "CASINO"] },
+  { category: "MOVIES", word: "HOME ALONE", decoys: ["ELF", "THE GRINCH", "A CHRISTMAS STORY"] },
+  { category: "MOVIES", word: "SHREK", decoys: ["KUNG FU PANDA", "MADAGASCAR", "MINIONS"] },
+  { category: "MOVIES", word: "INCEPTION", decoys: ["MEMENTO", "SHUTTER ISLAND", "BLACK SWAN"] },
+
+  // TV SHOWS
+  { category: "TV SHOWS", word: "BREAKING BAD", decoys: ["NARCOS", "OZARK", "THE WIRE"] },
+  { category: "TV SHOWS", word: "GAME OF THRONES", decoys: ["VIKINGS", "THE LAST KINGDOM", "ROME"] },
+  { category: "TV SHOWS", word: "THE OFFICE", decoys: ["PARKS AND REC", "BROOKLYN NINE-NINE", "ARRESTED DEVELOPMENT"] },
+  { category: "TV SHOWS", word: "STRANGER THINGS", decoys: ["DARK", "BLACK MIRROR", "LOST"] },
+  { category: "TV SHOWS", word: "FRIENDS", decoys: ["SEINFELD", "HOW I MET YOUR MOTHER", "NEW GIRL"] },
+  { category: "TV SHOWS", word: "SQUID GAME", decoys: ["ALICE IN BORDERLAND", "BATTLE ROYALE", "THE HUNGER GAMES"] },
+
+  // MUSIC
+  { category: "MUSIC", word: "GUITAR", decoys: ["TRUMPET", "HARP", "ACCORDION"] },
+  { category: "MUSIC", word: "DRUMS", decoys: ["XYLOPHONE", "STEEL DRUM", "COWBELL"] },
+  { category: "MUSIC", word: "CONCERT", decoys: ["OPEN MIC", "TALENT SHOW", "KARAOKE"] },
+  { category: "MUSIC", word: "VINYL", decoys: ["MIXTAPE", "8-TRACK", "BOOM BOX"] },
+  { category: "MUSIC", word: "HIP HOP", decoys: ["REGGAE", "COUNTRY", "JAZZ"] },
+  { category: "MUSIC", word: "MUSIC VIDEO", decoys: ["TALK SHOW", "DOCUMENTARY", "LIVE STREAM"] },
+
+  // JOBS
+  { category: "JOBS", word: "SURGEON", decoys: ["DENTIST", "VETERINARIAN", "PHARMACIST"] },
+  { category: "JOBS", word: "ASTRONAUT", decoys: ["DEEP SEA DIVER", "FIGHTER PILOT", "MOUNTAINEER"] },
+  { category: "JOBS", word: "CHEF", decoys: ["SOMMELIER", "FOOD CRITIC", "CATERER"] },
+  { category: "JOBS", word: "DETECTIVE", decoys: ["BOUNTY HUNTER", "SECURITY GUARD", "FORENSIC SCIENTIST"] },
+  { category: "JOBS", word: "LAWYER", decoys: ["POLITICIAN", "JUDGE", "NOTARY"] },
+  { category: "JOBS", word: "ARCHITECT", decoys: ["INTERIOR DESIGNER", "URBAN PLANNER", "SURVEYOR"] },
+  { category: "JOBS", word: "TEACHER", decoys: ["LIBRARIAN", "TUTOR", "GUIDANCE COUNSELOR"] },
+
+  // GAMES
+  { category: "GAMES", word: "CHESS", decoys: ["BACKGAMMON", "GO", "MAHJONG"] },
+  { category: "GAMES", word: "POKER", decoys: ["BLACKJACK", "BACCARAT", "CRAPS"] },
+  { category: "GAMES", word: "MINECRAFT", decoys: ["ROBLOX", "TERRARIA", "STARDEW VALLEY"] },
+  { category: "GAMES", word: "FORTNITE", decoys: ["APEX LEGENDS", "PUBG", "WARZONE"] },
+  { category: "GAMES", word: "MONOPOLY", decoys: ["RISK", "CLUEDO", "SCRABBLE"] },
+  { category: "GAMES", word: "MARIO KART", decoys: ["GRAN TURISMO", "NEED FOR SPEED", "F-ZERO"] },
+
+  // HOLIDAYS
+  { category: "HOLIDAYS", word: "HALLOWEEN", decoys: ["DAY OF THE DEAD", "BONFIRE NIGHT", "WALPURGISNACHT"] },
+  { category: "HOLIDAYS", word: "CHRISTMAS", decoys: ["DIWALI", "HANUKKAH", "LUNAR NEW YEAR"] },
+  { category: "HOLIDAYS", word: "VALENTINES DAY", decoys: ["MOTHERS DAY", "ANNIVERSARY", "PROM NIGHT"] },
+  { category: "HOLIDAYS", word: "NEW YEARS EVE", decoys: ["MARDI GRAS", "CARNIVAL", "OKTOBERFEST"] },
+
+  // BRANDS
+  { category: "BRANDS", word: "NIKE", decoys: ["PATAGONIA", "THE NORTH FACE", "UNDER ARMOUR"] },
+  { category: "BRANDS", word: "APPLE", decoys: ["SAMSUNG", "SONY", "HUAWEI"] },
+  { category: "BRANDS", word: "MCDONALDS", decoys: ["SUBWAY", "DOMINOS", "CHIPOTLE"] },
+  { category: "BRANDS", word: "FERRARI", decoys: ["HARLEY DAVIDSON", "ROLEX", "PRIVATE JET"] },
+  { category: "BRANDS", word: "GUCCI", decoys: ["SUPREME", "RALPH LAUREN", "CALVIN KLEIN"] },
+
+  // CELEBRITIES (use archetypes not real people)
+  { category: "FAMOUS ROLES", word: "JAMES BOND", decoys: ["INDIANA JONES", "ETHAN HUNT", "JASON BOURNE"] },
+  { category: "FAMOUS ROLES", word: "BATMAN", decoys: ["IRON MAN", "SPIDER-MAN", "CAPTAIN AMERICA"] },
+  { category: "FAMOUS ROLES", word: "SHERLOCK HOLMES", decoys: ["HERCULE POIROT", "COLUMBO", "MONK"] },
+
+  // TRANSPORT
+  { category: "TRANSPORT", word: "SUBMARINE", decoys: ["SPEEDBOAT", "HOVERCRAFT", "GONDOLA"] },
+  { category: "TRANSPORT", word: "HELICOPTER", decoys: ["HOT AIR BALLOON", "HANG GLIDER", "BLIMP"] },
+  { category: "TRANSPORT", word: "BULLET TRAIN", decoys: ["CABLE CAR", "MONORAIL", "RICKSHAW"] },
+  { category: "TRANSPORT", word: "MOTORCYCLE", decoys: ["SNOWMOBILE", "ATV", "SEGWAY"] },
+
+  // SCIENCE
+  { category: "SCIENCE", word: "BLACK HOLE", decoys: ["ASTEROID", "SUPERNOVA", "NEBULA"] },
+  { category: "SCIENCE", word: "DNA", decoys: ["STEM CELL", "CHROMOSOME", "PROTEIN"] },
+  { category: "SCIENCE", word: "VACCINE", decoys: ["ANTIBIOTIC", "PAINKILLER", "ANTIDEPRESSANT"] },
+  { category: "SCIENCE", word: "NUCLEAR REACTOR", decoys: ["WIND TURBINE", "SOLAR PANEL", "HYDRODAM"] },
+
+  // HOBBIES
+  { category: "HOBBIES", word: "ROCK CLIMBING", decoys: ["PARKOUR", "BUNGEE JUMPING", "SKYDIVING"] },
+  { category: "HOBBIES", word: "PAINTING", decoys: ["POTTERY", "WOODCARVING", "GLASSBLOWING"] },
+  { category: "HOBBIES", word: "MEDITATION", decoys: ["HYPNOSIS", "FLOAT TANK", "SOUND BATH"] },
+  { category: "HOBBIES", word: "PHOTOGRAPHY", decoys: ["FILMMAKING", "PODCASTING", "VLOGGING"] },
+];
+
+function pickWordPack(category = "ALL") {
+  const pool = category === "ALL" ? WORD_PACKS : WORD_PACKS.filter(p => p.category === category);
+  const pack = pool[Math.floor(Math.random() * pool.length)];
+  return {
+    category: pack.category,
+    word: pack.word,
+    decoy: pack.decoys[Math.floor(Math.random() * pack.decoys.length)],
+  };
+}
+
+const PLAYER_COLORS = [
+  { accent: "#FF4545", bg: "#1a0808" },
+  { accent: "#4589FF", bg: "#080d1a" },
+  { accent: "#42D693", bg: "#08140f" },
+  { accent: "#FFB830", bg: "#14100a" },
+  { accent: "#C879FF", bg: "#110a14" },
+  { accent: "#FF7A45", bg: "#140c08" },
+  { accent: "#45D4FF", bg: "#081214" },
+  { accent: "#FF45A8", bg: "#140811" },
+];
+
+const NAMES = ["ARLO", "MIRA", "CADE", "ZENA", "ROME", "LYRA", "FINN", "NOVA"];
+
+const ANIMALS = [
+  { id: "fox",     label: "FOX",     render: (c, a, s) => <AnimalFox color={c} acc={a} size={s} /> },
+  { id: "bear",    label: "BEAR",    render: (c, a, s) => <AnimalBear color={c} acc={a} size={s} /> },
+  { id: "rabbit",  label: "RABBIT",  render: (c, a, s) => <AnimalRabbit color={c} acc={a} size={s} /> },
+  { id: "cat",     label: "CAT",     render: (c, a, s) => <AnimalCat color={c} acc={a} size={s} /> },
+  { id: "wolf",    label: "WOLF",    render: (c, a, s) => <AnimalWolf color={c} acc={a} size={s} /> },
+  { id: "panda",   label: "PANDA",   render: (c, a, s) => <AnimalPanda color={c} acc={a} size={s} /> },
+  { id: "raccoon", label: "RACCOON", render: (c, a, s) => <AnimalRaccoon color={c} acc={a} size={s} /> },
+  { id: "owl",     label: "OWL",     render: (c, a, s) => <AnimalOwl color={c} acc={a} size={s} /> },
+];
+
+const ACCESSORIES = [
+  { id: "none",   label: "NONE" },
+  { id: "bandit", label: "BANDIT" },
+  { id: "crown",  label: "CROWN" },
+  { id: "tophat", label: "TOP HAT" },
+  { id: "shades", label: "SHADES" },
+  { id: "patch",  label: "EYEPATCH" },
+];
+
+// ── Accessory overlay SVGs (fixed 60x60 coords, viewBox handles scaling) ──
+function AccBandit() {
+  // Solid band - rendered BEFORE eyes so eyes show through naturally on top
+  return (
+    <g>
+      <rect x={7} y={25} width={46} height={13} rx={4} fill="#151515" stroke="#444" strokeWidth={0.6}/>
+      {/* subtle lens outlines */}
+      <ellipse cx={22} cy={31} rx={6.5} ry={5} fill="none" stroke="#333" strokeWidth={0.8}/>
+      <ellipse cx={38} cy={31} rx={6.5} ry={5} fill="none" stroke="#333" strokeWidth={0.8}/>
+      {/* bridge */}
+      <line x1={28.5} y1={31} x2={31.5} y2={31} stroke="#333" strokeWidth={1.5}/>
+      {/* side strings */}
+      <line x1={3} y1={31} x2={7} y2={31} stroke="#555" strokeWidth={1}/>
+      <line x1={53} y1={31} x2={57} y2={31} stroke="#555" strokeWidth={1}/>
+    </g>
+  );
+}
+function AccCrown({ color }) {
+  return (
+    <g>
+      <polygon points="12,16 18,6 24,13 30,4 36,13 42,6 48,16 48,22 12,22" fill={color} opacity={0.92}/>
+      <rect x={12} y={19} width={36} height={4} rx={1} fill={color} opacity={0.7}/>
+      <circle cx={24} cy={12} r={2} fill="#fff" opacity={0.6}/>
+      <circle cx={36} cy={10} r={2.5} fill="#fff" opacity={0.7}/>
+      <circle cx={30} cy={6} r={1.5} fill="#fff" opacity={0.5}/>
+    </g>
+  );
+}
+function AccTophat() {
+  return (
+    <g>
+      <rect x={17} y={4} width={26} height={18} rx={2} fill="#1a1a1a" stroke="#444" strokeWidth={0.8}/>
+      <rect x={10} y={20} width={40} height={4} rx={1} fill="#252525" stroke="#555" strokeWidth={0.6}/>
+      <rect x={19} y={5} width={22} height={3} rx={1} fill="#c8ff00" opacity={0.45}/>
+    </g>
+  );
+}
+function AccShades({ color }) {
+  // Eyes sit at cx=22, cx=38, cy=30-31 across all animals
+  return (
+    <g>
+      <rect x={8} y={27} width={18} height={9} rx={4} fill={color} opacity={0.9}/>
+      <rect x={34} y={27} width={18} height={9} rx={4} fill={color} opacity={0.9}/>
+      <line x1={26} y1={31} x2={34} y2={31} stroke={color} strokeWidth={2}/>
+      <line x1={3} y1={30} x2={8} y2={31} stroke={color} strokeWidth={1.5}/>
+      <line x1={57} y1={30} x2={52} y2={31} stroke={color} strokeWidth={1.5}/>
+      <rect x={9} y={28} width={16} height={7} rx={3} fill="#000" opacity={0.35}/>
+      <rect x={35} y={28} width={16} height={7} rx={3} fill="#000" opacity={0.35}/>
+    </g>
+  );
+}
+function AccPatch() {
+  // Left eye at cx=22, cy=31
+  return (
+    <g>
+      <ellipse cx={22} cy={31} rx={7.5} ry={6} fill="#111" stroke="#555" strokeWidth={0.8}/>
+      <ellipse cx={22} cy={31} rx={4.5} ry={3.5} fill="#0a0a0a"/>
+      <line x1={4} y1={27} x2={14} y2={30} stroke="#666" strokeWidth={1}/>
+      <line x1={4} y1={35} x2={14} y2={32} stroke="#666" strokeWidth={1}/>
+    </g>
+  );
+}
+
+function Accessory({ id, color }) {
+  if (id === "bandit") return <AccBandit />;
+  if (id === "crown")  return <AccCrown color={color} />;
+  if (id === "tophat") return <AccTophat />;
+  if (id === "shades") return <AccShades color={color} />;
+  if (id === "patch")  return <AccPatch />;
+  return null;
+}
+
+// ── Animal SVGs ── viewBox="0 5 60 60" centers face (y=35 maps to mid)
+function AnimalFox({ color, acc, size = 44 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 5 60 60">
+      <polygon points="8,22 18,8 22,24" fill={color}/>
+      <polygon points="52,22 42,8 38,24" fill={color}/>
+      <polygon points="10,21 18,11 21,23" fill="#000" opacity={0.3}/>
+      <polygon points="50,21 42,11 39,23" fill="#000" opacity={0.3}/>
+      <ellipse cx={30} cy={35} rx={22} ry={20} fill={color}/>
+      <ellipse cx={30} cy={42} rx={10} ry={7} fill="#e8c8a0" opacity={0.45}/>
+      <Accessory id={acc} color={color}/>
+      <ellipse cx={30} cy={39} rx={3} ry={2} fill="#111"/>
+      <ellipse cx={22} cy={30} rx={4} ry={4.5} fill="#111"/>
+      <ellipse cx={38} cy={30} rx={4} ry={4.5} fill="#111"/>
+      <circle cx={23} cy={29} r={1.3} fill="#fff" opacity={0.75}/>
+      <circle cx={39} cy={29} r={1.3} fill="#fff" opacity={0.75}/>
+    </svg>
+  );
+}
+
+function AnimalBear({ color, acc, size = 44 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 5 60 60">
+      <circle cx={14} cy={18} r={10} fill={color}/>
+      <circle cx={46} cy={18} r={10} fill={color}/>
+      <circle cx={14} cy={18} r={6} fill="#000" opacity={0.2}/>
+      <circle cx={46} cy={18} r={6} fill="#000" opacity={0.2}/>
+      <ellipse cx={30} cy={36} rx={22} ry={20} fill={color}/>
+      <ellipse cx={30} cy={44} rx={11} ry={8} fill="#000" opacity={0.15}/>
+      <Accessory id={acc} color={color}/>
+      <ellipse cx={30} cy={41} rx={4} ry={2.5} fill="#111"/>
+      <ellipse cx={22} cy={31} rx={4.5} ry={5} fill="#111"/>
+      <ellipse cx={38} cy={31} rx={4.5} ry={5} fill="#111"/>
+      <circle cx={23} cy={30} r={1.5} fill="#fff" opacity={0.8}/>
+      <circle cx={39} cy={30} r={1.5} fill="#fff" opacity={0.8}/>
+    </svg>
+  );
+}
+
+function AnimalRabbit({ color, acc, size = 44 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 2 60 60">
+      <ellipse cx={21} cy={12} rx={6} ry={14} fill={color}/>
+      <ellipse cx={39} cy={12} rx={6} ry={14} fill={color}/>
+      <ellipse cx={21} cy={12} rx={3} ry={10} fill="#000" opacity={0.25}/>
+      <ellipse cx={39} cy={12} rx={3} ry={10} fill="#000" opacity={0.25}/>
+      <ellipse cx={30} cy={37} rx={21} ry={19} fill={color}/>
+      <ellipse cx={30} cy={44} rx={9} ry={6} fill="#e8c8c8" opacity={0.3}/>
+      <Accessory id={acc} color={color}/>
+      <ellipse cx={30} cy={41} rx={2.5} ry={1.8} fill="#111"/>
+      <ellipse cx={22} cy={32} rx={4} ry={4.5} fill="#111"/>
+      <ellipse cx={38} cy={32} rx={4} ry={4.5} fill="#111"/>
+      <circle cx={23} cy={31} r={1.3} fill="#fff" opacity={0.75}/>
+      <circle cx={39} cy={31} r={1.3} fill="#fff" opacity={0.75}/>
+    </svg>
+  );
+}
+
+function AnimalCat({ color, acc, size = 44 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 5 60 60">
+      <polygon points="10,26 16,10 22,26" fill={color}/>
+      <polygon points="50,26 44,10 38,26" fill={color}/>
+      <polygon points="12,25 16,13 21,25" fill="#000" opacity={0.25}/>
+      <polygon points="48,25 44,13 39,25" fill="#000" opacity={0.25}/>
+      <ellipse cx={30} cy={36} rx={21} ry={19} fill={color}/>
+      <ellipse cx={30} cy={43} rx={8} ry={5} fill="#000" opacity={0.12}/>
+      <Accessory id={acc} color={color}/>
+      <ellipse cx={30} cy={40} rx={2.5} ry={1.8} fill="#111"/>
+      <ellipse cx={22} cy={31} rx={4} ry={5} fill="#111"/>
+      <ellipse cx={38} cy={31} rx={4} ry={5} fill="#111"/>
+      <ellipse cx={22} cy={31} rx={1.2} ry={4} fill="#200"/>
+      <ellipse cx={38} cy={31} rx={1.2} ry={4} fill="#200"/>
+      <circle cx={23} cy={30} r={1.1} fill="#fff" opacity={0.65}/>
+      <circle cx={39} cy={30} r={1.1} fill="#fff" opacity={0.65}/>
+      <line x1={8} y1={39} x2={21} y2={41} stroke="#000" strokeWidth={0.9} opacity={0.4}/>
+      <line x1={8} y1={42} x2={21} y2={42} stroke="#000" strokeWidth={0.9} opacity={0.4}/>
+      <line x1={52} y1={39} x2={39} y2={41} stroke="#000" strokeWidth={0.9} opacity={0.4}/>
+      <line x1={52} y1={42} x2={39} y2={42} stroke="#000" strokeWidth={0.9} opacity={0.4}/>
+    </svg>
+  );
+}
+
+function AnimalWolf({ color, acc, size = 44 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 5 60 60">
+      <polygon points="6,24 16,6 24,24" fill={color}/>
+      <polygon points="54,24 44,6 36,24" fill={color}/>
+      <polygon points="8,23 16,9 22,23" fill="#000" opacity={0.25}/>
+      <polygon points="52,23 44,9 38,23" fill="#000" opacity={0.25}/>
+      <ellipse cx={30} cy={36} rx={22} ry={20} fill={color}/>
+      <ellipse cx={30} cy={44} rx={12} ry={9} fill="#000" opacity={0.12}/>
+      <Accessory id={acc} color={color}/>
+      <ellipse cx={30} cy={40} rx={4} ry={2.5} fill="#111"/>
+      <ellipse cx={22} cy={30} rx={4} ry={5} fill="#111"/>
+      <ellipse cx={38} cy={30} rx={4} ry={5} fill="#111"/>
+      <circle cx={23} cy={29} r={1.4} fill="#fff" opacity={0.85}/>
+      <circle cx={39} cy={29} r={1.4} fill="#fff" opacity={0.85}/>
+    </svg>
+  );
+}
+
+function AnimalPanda({ color, acc, size = 44 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 5 60 60">
+      <circle cx={14} cy={18} r={10} fill={color}/>
+      <circle cx={46} cy={18} r={10} fill={color}/>
+      <ellipse cx={30} cy={36} rx={22} ry={20} fill="#e8e8e8"/>
+      <ellipse cx={21} cy={30} rx={7} ry={8} fill={color} opacity={0.9}/>
+      <ellipse cx={39} cy={30} rx={7} ry={8} fill={color} opacity={0.9}/>
+      <ellipse cx={30} cy={43} rx={10} ry={7} fill="#ddd" opacity={0.5}/>
+      <Accessory id={acc} color={color}/>
+      <ellipse cx={30} cy={40} rx={3.5} ry={2.2} fill="#111"/>
+      <ellipse cx={21} cy={30} rx={3.5} ry={4} fill="#111"/>
+      <ellipse cx={39} cy={30} rx={3.5} ry={4} fill="#111"/>
+      <circle cx={22} cy={29} r={1.3} fill="#fff" opacity={0.8}/>
+      <circle cx={40} cy={29} r={1.3} fill="#fff" opacity={0.8}/>
+    </svg>
+  );
+}
+
+function AnimalRaccoon({ color, acc, size = 44 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 5 60 60">
+      <polygon points="10,24 18,10 23,24" fill={color}/>
+      <polygon points="50,24 42,10 37,24" fill={color}/>
+      <ellipse cx={30} cy={36} rx={22} ry={20} fill={color}/>
+      <ellipse cx={21} cy={30} rx={7} ry={6} fill="#111" opacity={0.5}/>
+      <ellipse cx={39} cy={30} rx={7} ry={6} fill="#111" opacity={0.5}/>
+      <rect x={25} y={28} width={10} height={4} rx={2} fill="#111" opacity={0.35}/>
+      <ellipse cx={30} cy={43} rx={11} ry={7} fill="#e8e0d0" opacity={0.35}/>
+      <Accessory id={acc} color={color}/>
+      <ellipse cx={30} cy={40} rx={3} ry={2} fill="#111"/>
+      <ellipse cx={21} cy={30} rx={3} ry={3.5} fill="#111"/>
+      <ellipse cx={39} cy={30} rx={3} ry={3.5} fill="#111"/>
+      <circle cx={22} cy={29} r={1.2} fill="#fff" opacity={0.7}/>
+      <circle cx={40} cy={29} r={1.2} fill="#fff" opacity={0.7}/>
+      <line x1={30} y1={17} x2={30} y2={24} stroke="#111" strokeWidth={3} opacity={0.25}/>
+    </svg>
+  );
+}
+
+function AnimalOwl({ color, acc, size = 44 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 5 60 60">
+      <polygon points="18,18 22,6 26,18" fill={color}/>
+      <polygon points="42,18 38,6 34,18" fill={color}/>
+      <ellipse cx={30} cy={36} rx={22} ry={20} fill={color}/>
+      <circle cx={21} cy={30} r={8} fill="#e8e8e8" opacity={0.9}/>
+      <circle cx={39} cy={30} r={8} fill="#e8e8e8" opacity={0.9}/>
+      <Accessory id={acc} color={color}/>
+      <circle cx={21} cy={30} r={5} fill="#111"/>
+      <circle cx={39} cy={30} r={5} fill="#111"/>
+      <circle cx={22} cy={28} r={1.5} fill="#fff" opacity={0.8}/>
+      <circle cx={40} cy={28} r={1.5} fill="#fff" opacity={0.8}/>
+      <polygon points="27,37 33,37 30,43" fill="#FFB830" opacity={0.85}/>
+    </svg>
+  );
+}
+
+function generatePlayers(setup) {
+  const imposterIdx = Math.floor(Math.random() * setup.length);
+  return setup.map((s, i) => ({
+    id: i,
+    name: s.name.toUpperCase().slice(0, 8),
+    color: PLAYER_COLORS[s.colorIdx],
+    animalId: s.animalId,
+    accId: s.accId,
+    isImposter: i === imposterIdx,
+    sus: 0,
+    eliminated: false,
+  }));
+}
+
+function defaultSetup(count) {
+  const animals = ["fox","bear","rabbit","cat","wolf","panda","raccoon","owl"];
+  return Array.from({ length: count }, (_, i) => ({
+    name: NAMES[i],
+    colorIdx: i,
+    animalId: animals[i % animals.length],
+    accId: "none",
+  }));
+}
+
+
+const css = `
+  @import url('${FONT_URL}');
+  .dr * { box-sizing: border-box; margin:0; padding:0; }
+  .dr { font-family: 'Space Grotesk', sans-serif; background: #080808; min-height: 100vh; color: #e8e8e8; }
+  .display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.04em; }
+  .mono { font-family: 'DM Mono', monospace; }
+  .card-in { animation: cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .fade-in { animation: fadeIn 0.4s ease both; }
+  .shake { animation: shake 0.4s ease; }
+  .pulse { animation: pulseAnim 1s ease infinite; }
+  .slide-up { animation: slideUp 0.3s ease both; }
+  @keyframes cardIn { from{opacity:0;transform:scale(0.93) translateY(14px)} to{opacity:1;transform:none} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} }
+  @keyframes pulseAnim { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  @keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+  .sus-fill { transition: width 0.65s cubic-bezier(0.34,1.56,0.64,1); }
+  .token { display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; letter-spacing:0.05em; clip-path:polygon(12% 0%,88% 0%,100% 12%,100% 88%,88% 100%,12% 100%,0% 88%,0% 12%); }
+  .btn-p { background:#c8ff00; color:#080808; font-family:'Bebas Neue',sans-serif; letter-spacing:0.08em; font-size:18px; border:none; cursor:pointer; transition:all 0.15s; width:100%; }
+  .btn-p:hover { background:#d4ff33; transform:translateY(-1px); }
+  .btn-p:active { background:#b8ef00; transform:translateY(1px); }
+  .noise-bg { background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E"); background-size:200px; }
+  input { outline:none; }
+  ::-webkit-scrollbar { width:3px; }
+  ::-webkit-scrollbar-track { background:#111; }
+  ::-webkit-scrollbar-thumb { background:#333; }
+`;
+
+function Token({ p, size = 44 }) {
+  const animal = ANIMALS.find(a => a.id === p.animalId) || ANIMALS[0];
+  return (
+    <div style={{
+      width: size, height: size,
+      background: `${p.color.accent}22`,
+      border: `1.5px solid ${p.color.accent}66`,
+      borderRadius: "50%",
+      overflow: "hidden",
+      flexShrink: 0,
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      {animal.render(p.color.accent, p.accId, size)}
+    </div>
+  );
+}
+
+function Pip({ active }) {
+  return <div style={{ width:8, height:8, background:active?"#c8ff00":"#2a2a2a", clipPath:"polygon(50% 0%,100% 50%,50% 100%,0% 50%)" }} />;
+}
+
+function SectionLabel({ children }) {
+  return <div className="mono" style={{ fontSize:10, color:"#555", letterSpacing:"0.15em", marginBottom:10 }}>{children}</div>;
+}
+
+function DupeGame() {
+  const [screen, setScreen] = useState("LOBBY");
+  const [playerCount, setPlayerCount] = useState(5);
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [hintsOn, setHintsOn] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [playerSetup, setPlayerSetup] = useState(defaultSetup(5));
+  const [editingPlayer, setEditingPlayer] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [players, setPlayers] = useState([]);
+  const [wordPack, setWordPack] = useState(null);
+  const [round, setRound] = useState(1);
+  const maxRounds = 4;
+  const [viewingPlayer, setViewingPlayer] = useState(0);
+  const [roleRevealed, setRoleRevealed] = useState(false);
+  const [votes, setVotes] = useState({});
+  const [votingPlayer, setVotingPlayer] = useState(0);
+  const [voteResult, setVoteResult] = useState(null);
+  const [gameResult, setGameResult] = useState(null);
+  const [wrongVotes, setWrongVotes] = useState(0);
+  const [imposterGuess, setImposterGuess] = useState("");
+  const [showGuess, setShowGuess] = useState(false);
+  const [guessResult, setGuessResult] = useState(null);
+  const [animateSus, setAnimateSus] = useState(null);
+  const [revealing, setRevealing] = useState(false);
+  const [cluePlayer, setCluePlayer] = useState(0);
+  const [susMap, setSusMap] = useState({});
+  const [activeSusser, setActiveSusser] = useState(null);
+
+  const maxWrong = playerSetup.length <= 4 ? 1 : playerSetup.length <= 6 ? 2 : 3;
+  const imposter = players.find(p => p.isImposter);
+  const active = players.filter(p => !p.eliminated);
+
+  // Count how many players are currently susing a given targetId
+  function susCount(targetId) {
+    return Object.values(susMap).filter(t => t === targetId).length;
+  }
+
+
+  function startGame() {
+    const pack = pickWordPack(selectedCategory);
+    setPlayers(generatePlayers(playerSetup)); setWordPack(pack);
+    setRound(1); setWrongVotes(0); setVotes({}); setVoteResult(null);
+    setGameResult(null); setViewingPlayer(0); setRoleRevealed(false);
+    setGuessResult(null); setShowGuess(false); setCluePlayer(0);
+    setSusMap({}); setActiveSusser(null);
+    setScreen("ROLE_REVEAL");
+  }
+
+  function selectSusser(playerId) {
+    setActiveSusser(prev => prev === playerId ? null : playerId);
+  }
+
+  function placeSus(targetId) {
+    if (activeSusser === null) return;
+    if (activeSusser === targetId) return; // can't sus yourself
+    setAnimateSus(targetId);
+    setTimeout(() => setAnimateSus(null), 600);
+    setSusMap(prev => ({ ...prev, [activeSusser]: targetId }));
+    setActiveSusser(null);
+  }
+
+  function castVote(targetId) {
+    const nv = {...votes, [votingPlayer]:targetId};
+    setVotes(nv);
+    if(votingPlayer < active.length - 1) { setVotingPlayer(v=>v+1); return; }
+    setRevealing(true);
+    setTimeout(() => {
+      setRevealing(false);
+      const tally = {};
+      Object.values(nv).forEach(v => { tally[v]=(tally[v]||0)+1; });
+      const maxV = Math.max(...Object.values(tally));
+      const elim = parseInt(Object.keys(tally).find(k=>tally[k]===maxV));
+      const ep = players.find(p=>p.id===elim);
+      setVoteResult({eliminatedId:elim, wasImposter:ep?.isImposter});
+      if(ep?.isImposter) { setGameResult("BRIEFED_WIN"); setScreen("GAME_END"); }
+      else {
+        const nw = wrongVotes+1; setWrongVotes(nw);
+        if(nw >= maxWrong || round >= maxRounds) { setGameResult("IMPOSTER_WINS_SURVIVAL"); setScreen("GAME_END"); }
+        else setScreen("VOTE_RESULT");
+      }
+    }, 2200);
+  }
+
+  function tryGuess() {
+    const ok = imposterGuess.trim().toUpperCase() === wordPack.word.toUpperCase();
+    setGuessResult(ok ? "correct" : "wrong");
+    if(ok) setTimeout(() => { setGameResult("IMPOSTER_WINS_GUESS"); setScreen("GAME_END"); }, 1200);
+    else setTimeout(() => { setGuessResult(null); setShowGuess(false); setImposterGuess(""); }, 1500);
+  }
+
+  // ── LOBBY ──────────────────────────────────────────────
+  if(screen==="LOBBY") return (
+    <div className="dr noise-bg" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:24}}>
+      <style>{css}</style>
+      <div className="fade-in" style={{width:"100%",maxWidth:380}}>
+        <div style={{textAlign:"center",marginBottom:36}}>
+          <div className="display" style={{fontSize:100,lineHeight:0.9,color:"#e8e8e8"}}>DUPE</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginTop:10}}>
+            {[0,1,2].map(i=><div key={i} style={{width:5,height:5,background:"#c8ff00",clipPath:"polygon(50% 0%,100% 50%,50% 100%,0% 50%)"}} />)}
+            <span className="mono" style={{fontSize:10,color:"#444",letterSpacing:"0.18em"}}>SOCIAL DEDUCTION</span>
+            {[0,1,2].map(i=><div key={i} style={{width:5,height:5,background:"#c8ff00",clipPath:"polygon(50% 0%,100% 50%,50% 100%,0% 50%)"}} />)}
+          </div>
+        </div>
+
+        <div style={{background:"#0d0d0d",border:"1px solid #1e1e1e",padding:"20px 22px",marginBottom:24}}>
+          <SectionLabel>RULES</SectionLabel>
+          {[
+            ["01","Everyone sees the same word — except one Dupe"],
+            ["02","The Dupe gets a similar but different word"],
+            ["03","Give one-word clues each round. Hunt the Dupe"],
+            ["04","Vote simultaneously. Wrong vote spends a chance"],
+            ["05","Dupe wins by surviving or guessing the real word"],
+          ].map(([n,t])=>(
+            <div key={n} style={{display:"flex",gap:14,marginBottom:7,alignItems:"flex-start"}}>
+              <span className="mono" style={{fontSize:10,color:"#333",minWidth:18,paddingTop:1}}>{n}</span>
+              <span style={{fontSize:13,color:"#777",lineHeight:1.55}}>{t}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{marginBottom:24}}>
+          <SectionLabel>NUMBER OF PLAYERS</SectionLabel>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:6}}>
+            {[3,4,5,6,7,8].map(n=>(
+              <button key={n} onClick={()=>{ setPlayerCount(n); setPlayerSetup(defaultSetup(n)); }} style={{
+                padding:"14px 0", background:playerCount===n?"#c8ff00":"#0d0d0d",
+                color:playerCount===n?"#080808":"#555",
+                border:`1px solid ${playerCount===n?"#c8ff00":"#222"}`,
+                cursor:"pointer", fontFamily:"'Bebas Neue',sans-serif", fontSize:24,
+                transition:"all 0.15s",
+              }}>{n}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Settings gear */}
+        <div style={{marginBottom:24}}>
+          <button onClick={()=>setSettingsOpen(o=>!o)} style={{
+            display:"flex",alignItems:"center",gap:8,background:"transparent",
+            border:"1px solid #222",padding:"8px 14px",cursor:"pointer",width:"100%",
+            transition:"border-color 0.15s",
+          }}
+            onMouseEnter={e=>e.currentTarget.style.borderColor="#444"}
+            onMouseLeave={e=>e.currentTarget.style.borderColor="#222"}
+          >
+            <span style={{fontSize:14}}>⚙</span>
+            <span className="mono" style={{fontSize:10,color:"#555",letterSpacing:"0.12em",flex:1,textAlign:"left"}}>
+              SETTINGS
+            </span>
+            <span className="mono" style={{fontSize:10,color:"#333",letterSpacing:"0.05em"}}>
+              {selectedCategory !== "ALL" ? selectedCategory : "ALL"} · HINTS {hintsOn?"ON":"OFF"} {settingsOpen?"▲":"▼"}
+            </span>
+          </button>
+
+          {settingsOpen && (
+            <div className="card-in" style={{border:"1px solid #1a1a1a",borderTop:"none",padding:"16px 14px",background:"#0a0a0a"}}>
+              {/* Category picker */}
+              <div style={{marginBottom:18}}>
+                <SectionLabel>CATEGORY</SectionLabel>
+                <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                  {["ALL", ...Array.from(new Set(WORD_PACKS.map(p=>p.category)))].map(cat=>{
+                    const active = selectedCategory===cat;
+                    return (
+                      <button key={cat} onClick={()=>setSelectedCategory(cat)} style={{
+                        padding:"5px 10px",background:active?"#c8ff00":"#0d0d0d",
+                        color:active?"#080808":"#555",
+                        border:`1px solid ${active?"#c8ff00":"#222"}`,
+                        cursor:"pointer",fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:"0.06em",
+                        transition:"all 0.15s",
+                      }}>{cat}</button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Hints toggle */}
+              <div>
+                <SectionLabel>DUPE HINT</SectionLabel>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                  {[["ON","Dupe gets a related word"],["OFF","Dupe gets nothing"]].map(([val,desc])=>{
+                    const active = (val==="ON")===hintsOn;
+                    return (
+                      <button key={val} onClick={()=>setHintsOn(val==="ON")} style={{
+                        padding:"10px 0",background:active?"#c8ff00":"#0d0d0d",
+                        color:active?"#080808":"#555",
+                        border:`1px solid ${active?"#c8ff00":"#222"}`,
+                        cursor:"pointer",transition:"all 0.15s",textAlign:"center",
+                      }}>
+                        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:"0.06em"}}>{val}</div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:9,letterSpacing:"0.08em",marginTop:2,opacity:0.7}}>{desc}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div style={{display:"flex",gap:10,marginBottom:28,alignItems:"flex-end"}}>
+          {playerSetup.map((s,i)=>{
+            const fp = { color:PLAYER_COLORS[s.colorIdx], animalId:s.animalId, accId:s.accId };
+            return (
+              <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <Token p={fp} size={36}/>
+                <span className="mono" style={{fontSize:8,color:PLAYER_COLORS[s.colorIdx].accent,letterSpacing:"0.05em",lineHeight:1}}>
+                  {s.name.slice(0,4).toUpperCase()}
+                </span>
+              </div>
+            );
+          })}
+          <div style={{flex:1,height:1,background:"linear-gradient(90deg,#222,transparent)",marginLeft:4,marginBottom:8}} />
+        </div>
+
+        <button className="btn-p" onClick={()=>setScreen("CUSTOMIZE")} style={{padding:"18px 0",marginBottom:8}}>
+          CUSTOMIZE PLAYERS →
+        </button>
+        <button onClick={startGame} className="btn-p" style={{
+          background:"transparent",border:"1px solid #c8ff00",color:"#c8ff00",
+          padding:"14px 0",letterSpacing:"0.1em",fontSize:16,
+        }}
+          onMouseEnter={e=>{e.currentTarget.style.background="#c8ff0011";}}
+          onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}
+        >START NOW</button>
+      </div>
+    </div>
+  );
+
+  // ── CUSTOMIZE ──────────────────────────────────────────
+  if(screen==="CUSTOMIZE") {
+    const usedColors = playerSetup.map(s=>s.colorIdx);
+    return (
+      <div className="dr noise-bg" style={{display:"flex",flexDirection:"column",minHeight:"100vh"}}>
+        <style>{css}</style>
+        <div style={{background:"#0a0a0a",borderBottom:"1px solid #1a1a1a",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+          <div className="display" style={{fontSize:32,color:"#e8e8e8"}}>CUSTOMIZE</div>
+          <button onClick={()=>setScreen("LOBBY")} className="mono" style={{background:"transparent",border:"1px solid #2a2a2a",color:"#555",padding:"6px 14px",cursor:"pointer",fontSize:11,letterSpacing:"0.08em"}}>← BACK</button>
+        </div>
+
+        <div style={{flex:1,overflowY:"auto",padding:16}}>
+          <SectionLabel>TAP A PLAYER TO EDIT</SectionLabel>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {playerSetup.map((s,i)=>{
+              const animal = ANIMALS.find(a=>a.id===s.animalId)||ANIMALS[0];
+              const isOpen = editingPlayer===i;
+              const fakeP = { color:PLAYER_COLORS[s.colorIdx], animalId:s.animalId, accId:s.accId };
+              return (
+                <div key={i}>
+                  <button onClick={()=>{ setEditingPlayer(isOpen?null:i); setEditName(s.name); }}
+                    style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"10px 14px",
+                      background:isOpen?PLAYER_COLORS[s.colorIdx].bg:"#0d0d0d",
+                      border:`1px solid ${isOpen?PLAYER_COLORS[s.colorIdx].accent:"#1e1e1e"}`,
+                      cursor:"pointer",transition:"all 0.15s",textAlign:"left"}}>
+                    <Token p={fakeP} size={44}/>
+                    <div style={{flex:1}}>
+                      <div className="display" style={{fontSize:20,color:isOpen?PLAYER_COLORS[s.colorIdx].accent:"#e8e8e8",lineHeight:1}}>{s.name.toUpperCase()}</div>
+                      <div className="mono" style={{fontSize:10,color:"#555",marginTop:3,letterSpacing:"0.08em"}}>
+                        {animal.label} · {ACCESSORIES.find(a=>a.id===s.accId)?.label}
+                      </div>
+                    </div>
+                    <div className="mono" style={{fontSize:10,color:"#444"}}>{isOpen?"▲":"▼"}</div>
+                  </button>
+
+                  {isOpen&&(
+                    <div className="card-in" style={{background:"#0a0a0a",border:"1px solid #1e1e1e",borderTop:"none",padding:16}}>
+
+                      {/* Live preview */}
+                      <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>
+                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+                          <Token p={{ color:PLAYER_COLORS[s.colorIdx], animalId:s.animalId, accId:s.accId }} size={80}/>
+                          <div className="display" style={{fontSize:22,color:PLAYER_COLORS[s.colorIdx].accent}}>{s.name.toUpperCase()}</div>
+                        </div>
+                      </div>
+
+                      {/* Name */}
+                      <SectionLabel>NAME</SectionLabel>
+                      <div style={{display:"flex",marginBottom:18,border:"1px solid #2a2a2a"}}>
+                        <input value={editName} onChange={e=>setEditName(e.target.value.toUpperCase().slice(0,8))}
+                          onKeyDown={e=>{ if(e.key==="Enter") setPlayerSetup(prev=>prev.map((p,pi)=>pi===i?{...p,name:editName||NAMES[i]}:p)); }}
+                          maxLength={8} className="mono"
+                          style={{flex:1,background:"#080808",border:"none",color:"#e8e8e8",padding:"10px 12px",fontSize:13,letterSpacing:"0.08em"}}/>
+                        <button onClick={()=>setPlayerSetup(prev=>prev.map((p,pi)=>pi===i?{...p,name:editName||NAMES[i]}:p))}
+                          className="btn-p" style={{width:"auto",padding:"10px 16px",fontSize:13}}>SAVE</button>
+                      </div>
+
+                      {/* Animal */}
+                      <SectionLabel>ANIMAL</SectionLabel>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:18}}>
+                        {ANIMALS.map(an=>{
+                          const sel = s.animalId===an.id;
+                          return (
+                            <button key={an.id} onClick={()=>setPlayerSetup(prev=>prev.map((p,pi)=>pi===i?{...p,animalId:an.id}:p))}
+                              className="mono"
+                              style={{padding:"8px 4px",background:sel?PLAYER_COLORS[s.colorIdx].bg:"#080808",
+                                border:`1px solid ${sel?PLAYER_COLORS[s.colorIdx].accent:"#1e1e1e"}`,
+                                cursor:"pointer",transition:"all 0.15s",fontSize:10,letterSpacing:"0.06em",
+                                color:sel?PLAYER_COLORS[s.colorIdx].accent:"#666"}}>
+                              {an.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Accessory */}
+                      <SectionLabel>ACCESSORY</SectionLabel>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,marginBottom:18}}>
+                        {ACCESSORIES.map(ac=>{
+                          const sel = s.accId===ac.id;
+                          return (
+                            <button key={ac.id} onClick={()=>setPlayerSetup(prev=>prev.map((p,pi)=>pi===i?{...p,accId:ac.id}:p))}
+                              className="mono"
+                              style={{padding:"8px 4px",background:sel?PLAYER_COLORS[s.colorIdx].bg:"#080808",
+                                border:`1px solid ${sel?PLAYER_COLORS[s.colorIdx].accent:"#1e1e1e"}`,
+                                cursor:"pointer",transition:"all 0.15s",fontSize:10,letterSpacing:"0.06em",
+                                color:sel?PLAYER_COLORS[s.colorIdx].accent:"#666"}}>
+                              {ac.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Color */}
+                      <SectionLabel>COLOR</SectionLabel>
+                      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                        {PLAYER_COLORS.map((c,ci)=>{
+                          const taken = usedColors.includes(ci)&&ci!==s.colorIdx;
+                          const sel = ci===s.colorIdx;
+                          return (
+                            <button key={ci} onClick={()=>{ if(!taken) setPlayerSetup(prev=>prev.map((p,pi)=>pi===i?{...p,colorIdx:ci}:p)); }}
+                              style={{width:32,height:32,background:sel?c.accent:`${c.accent}22`,
+                                border:`2px solid ${sel?c.accent:taken?"#111":`${c.accent}44`}`,
+                                cursor:taken?"not-allowed":"pointer",opacity:taken?0.2:1,
+                                borderRadius:"50%",transition:"all 0.15s"}}/>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{padding:16,borderTop:"1px solid #1a1a1a",flexShrink:0}}>
+          <button className="btn-p" onClick={startGame} style={{padding:"18px 0"}}>START GAME →</button>
+        </div>
+      </div>
+    );
+  }
+
+
+  // ── ROLE REVEAL ────────────────────────────────────────
+  if(screen==="ROLE_REVEAL") {
+    const cur = players[viewingPlayer];
+    if(!cur) return null;
+    return (
+      <div className="dr noise-bg" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:24}}>
+        <style>{css}</style>
+        <div style={{width:"100%",maxWidth:360}}>
+          <div style={{textAlign:"center",marginBottom:28}}>
+            <div className="mono" style={{fontSize:11,color:"#444",letterSpacing:"0.15em",marginBottom:6}}>
+              PLAYER {viewingPlayer+1} OF {players.length}
+            </div>
+            <div className="display" style={{fontSize:38,color:"#e8e8e8"}}>CHECK YOUR ROLE</div>
+          </div>
+
+          {!roleRevealed ? (
+            <div className="card-in">
+              <button onClick={()=>setRoleRevealed(true)} style={{
+                width:"100%",background:"#0d0d0d",border:`2px solid ${cur.color.accent}33`,
+                padding:"32px 40px",cursor:"pointer",transition:"all 0.2s",
+                display:"flex",flexDirection:"column",alignItems:"center",
+              }}
+                onMouseEnter={e=>e.currentTarget.style.borderColor=cur.color.accent}
+                onMouseLeave={e=>e.currentTarget.style.borderColor=`${cur.color.accent}33`}
+              >
+                <Token p={cur} size={80} />
+                <div className="display" style={{fontSize:36,color:cur.color.accent,marginTop:12}}>{cur.name}</div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:16,width:"100%"}}>
+                  <div style={{flex:1,height:1,background:"#1e1e1e"}} />
+                  <span className="mono" style={{fontSize:11,color:"#444",letterSpacing:"0.12em"}}>TAP TO REVEAL</span>
+                  <div style={{flex:1,height:1,background:"#1e1e1e"}} />
+                </div>
+              </button>
+            </div>
+          ) : (
+            <div className="card-in">
+              <div style={{
+                background:cur.isImposter?"#0d0808":"#080f0a",
+                border:`1px solid ${cur.isImposter?"#FF4545":"#42D693"}`,
+                padding:28,
+              }}>
+                <div style={{textAlign:"center",marginBottom:22}}>
+                  <div className="display" style={{fontSize:46,color:cur.isImposter?"#FF4545":"#42D693",lineHeight:1}}>
+                    {cur.isImposter?"YOU'RE THE DUPE":"BRIEFED"}
+                  </div>
+                </div>
+                <div style={{height:1,background:"#1e1e1e",marginBottom:20}} />
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:cur.isImposter?14:0}}>
+                  <div style={{background:"#080808",border:"1px solid #1a1a1a",padding:"14px 16px"}}>
+                    <SectionLabel>CATEGORY</SectionLabel>
+                    <div className="display" style={{fontSize:22,color:"#e8e8e8"}}>{wordPack.category}</div>
+                  </div>
+                  <div style={{background:cur.isImposter?"#150808":"#080808",border:`1px solid ${cur.isImposter?"#3a1515":"#1a1a1a"}`,padding:"14px 16px"}}>
+                    <SectionLabel>{cur.isImposter?"YOUR WORD":"THE WORD"}</SectionLabel>
+                    <div className="display" style={{fontSize:22,color:cur.isImposter?"#FF4545":"#c8ff00"}}>
+                      {cur.isImposter?(hintsOn?wordPack.decoy:"???"):wordPack.word}
+                    </div>
+                  </div>
+                </div>
+                {cur.isImposter&&(
+                  <div style={{background:"#100808",border:"1px dashed #2a1515",padding:"10px 14px",marginBottom:16}}>
+                    <div className="mono" style={{fontSize:11,color:"#FF454599",lineHeight:1.6}}>
+                      This is NOT their word. Blend in. Listen for clues. Guess the real word to win.
+                    </div>
+                  </div>
+                )}
+                <button className="btn-p" onClick={()=>{
+                  setRoleRevealed(false);
+                  if(viewingPlayer<players.length-1) setViewingPlayer(v=>v+1);
+                  else setScreen("DISCUSSION");
+                }} style={{padding:"16px 0"}}>
+                  {viewingPlayer<players.length-1?`PASS TO ${players[viewingPlayer+1]?.name}`:"BEGIN DISCUSSION"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── DISCUSSION ─────────────────────────────────────────
+  if(screen==="DISCUSSION") {
+    const curPlayer = active[cluePlayer % active.length];
+    const allHadTurn = cluePlayer >= active.length;
+    return (
+    <div className="dr" style={{display:"flex",flexDirection:"column",minHeight:"100vh"}}>
+      <style>{css}</style>
+      <div style={{background:"#0a0a0a",borderBottom:"1px solid #1a1a1a",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+        <div>
+          <div style={{display:"flex",gap:5,marginBottom:6}}>
+            {Array.from({length:maxRounds},(_,i)=><Pip key={i} active={i<round}/>)}
+          </div>
+          <div className="display" style={{fontSize:32,lineHeight:1,color:"#e8e8e8"}}>ROUND {round}</div>
+        </div>
+        <div style={{textAlign:"right"}}>
+          <div className="mono" style={{fontSize:10,color:"#555",letterSpacing:"0.1em",marginBottom:2}}>WRONG VOTES</div>
+          <div className="display" style={{fontSize:28,color:wrongVotes>0?"#FF4545":"#e8e8e8"}}>{wrongVotes}/{maxWrong}</div>
+        </div>
+      </div>
+
+      <div style={{flex:1,overflowY:"auto",padding:16}}>
+
+        {/* Current turn card */}
+        <div className="card-in" style={{
+          background:curPlayer?.color.bg || "#0d0d0d",
+          border:`1px solid ${curPlayer?.color.accent || "#2a2a2a"}`,
+          padding:24, marginBottom:16, textAlign:"center",
+        }}>
+          <div className="mono" style={{fontSize:10,color:"#555",letterSpacing:"0.15em",marginBottom:12}}>SAY YOUR CLUE OUT LOUD</div>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
+            <Token p={curPlayer} size={72}/>
+          </div>
+          <div className="display" style={{fontSize:42,color:curPlayer?.color.accent,lineHeight:1,marginBottom:4}}>{curPlayer?.name}</div>
+          <div className="mono" style={{fontSize:10,color:"#444",letterSpacing:"0.1em",marginTop:8}}>
+            {cluePlayer + 1} / {active.length} THIS ROUND
+          </div>
+        </div>
+
+        {/* Turn progress dots */}
+        <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
+          {active.map((p,i) => {
+            const done = i < (cluePlayer % active.length);
+            const cur2 = i === (cluePlayer % active.length);
+            return (
+              <div key={p.id} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <div style={{
+                  width:8,height:8,borderRadius:"50%",
+                  background: cur2 ? p.color.accent : done ? `${p.color.accent}55` : "#222",
+                  transition:"all 0.2s",
+                }}/>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Sus pick for current player */}
+        <SectionLabel>SUSPICION BOARD</SectionLabel>
+        {(() => {
+          const mySusTarget = curPlayer ? susMap[curPlayer.id] : null;
+          const mySusName = mySusTarget !== undefined ? active.find(t=>t.id===mySusTarget)?.name : null;
+          return (
+            <div style={{background:"#0a0a0a",border:"1px solid #1e1e1e",padding:"10px 14px",marginBottom:14}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div>
+                  <div className="mono" style={{fontSize:9,color:"#444",letterSpacing:"0.1em",marginBottom:2}}>{curPlayer?.name}'S SUS PICK</div>
+                  <div className="display" style={{fontSize:18,color:mySusName?curPlayer?.color.accent:"#333",lineHeight:1}}>
+                    {mySusName || "NONE"}
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end",maxWidth:"60%"}}>
+                  {active.filter(p=>p.id!==curPlayer?.id).map(p=>{
+                    const sel = susMap[curPlayer?.id]===p.id;
+                    return (
+                      <button key={p.id} onClick={()=>{
+                        setSusMap(prev=>({...prev,[curPlayer.id]: sel ? undefined : p.id}));
+                        if(!sel){setAnimateSus(p.id);setTimeout(()=>setAnimateSus(null),600);}
+                      }} style={{
+                        padding:"4px 8px",background:sel?curPlayer?.color.bg:"#080808",
+                        border:`1px solid ${sel?curPlayer?.color.accent:"#2a2a2a"}`,
+                        cursor:"pointer",transition:"all 0.12s",
+                      }}>
+                        <span className="mono" style={{fontSize:10,color:sel?curPlayer?.color.accent:"#555",letterSpacing:"0.05em"}}>{p.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Sus board */}
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:20}}>
+          {active.map(p=>{
+            const count = susCount(p.id);
+            const maxCount = active.length - 1;
+            const pct = maxCount > 0 ? count / maxCount : 0;
+            const sc = pct>0.65?"#FF4545":pct>0.35?"#FFB830":"#42D693";
+            return (
+              <div key={p.id} className={animateSus===p.id?"shake":""} style={{
+                background:"#0d0d0d",border:`1px solid ${animateSus===p.id?p.color.accent:"#1a1a1a"}`,
+                padding:"10px 14px",transition:"border-color 0.2s",
+              }}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <Token p={p} size={32}/>
+                    <span className="display" style={{fontSize:20,color:"#e8e8e8"}}>{p.name}</span>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span className="mono" style={{fontSize:12,color:count>0?sc:"#333"}}>{count}/{maxCount}</span>
+                    <div style={{display:"flex",gap:3}}>
+                      {active.filter(src=>susMap[src.id]===p.id).map(src=>(
+                        <div key={src.id} style={{width:8,height:8,borderRadius:"50%",background:src.color.accent,opacity:0.8}}/>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div style={{height:2,background:"#1a1a1a"}}>
+                  <div className="sus-fill" style={{height:"100%",width:`${pct*100}%`,background:sc}}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {round>=3&&!showGuess&&(
+          <button onClick={()=>setShowGuess(true)} className="mono" style={{
+            width:"100%",background:"transparent",border:"1px dashed #3a1515",
+            color:"#FF454566",padding:"9px 0",cursor:"pointer",fontSize:11,
+            letterSpacing:"0.08em",marginBottom:10,transition:"all 0.15s",
+          }}
+            onMouseEnter={e=>e.target.style.color="#FF4545"}
+            onMouseLeave={e=>e.target.style.color="#FF454566"}
+          >▸ DUPE ONLY: GUESS THE REAL WORD TO WIN INSTANTLY</button>
+        )}
+
+        {showGuess&&(
+          <div className="card-in" style={{background:"#0d0808",border:"1px solid #3a1515",padding:16,marginBottom:10}}>
+            <div className="mono" style={{fontSize:10,color:"#FF4545",marginBottom:10,letterSpacing:"0.12em"}}>DUPE — WHAT IS THE REAL WORD?</div>
+            <div style={{display:"flex"}}>
+              <input value={imposterGuess} onChange={e=>setImposterGuess(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&tryGuess()}
+                placeholder="TYPE WORD..."
+                className="mono"
+                style={{flex:1,background:"#080808",border:"1px solid #2a1515",borderRight:"none",color:"#e8e8e8",padding:"10px 12px",fontSize:13,letterSpacing:"0.06em"}}
+              />
+              <button onClick={tryGuess} className="btn-p" style={{width:"auto",padding:"10px 20px",fontSize:16}}>GO</button>
+            </div>
+            {guessResult&&(
+              <div className="mono" style={{marginTop:10,fontSize:11,letterSpacing:"0.1em",color:guessResult==="correct"?"#42D693":"#FF4545"}}>
+                {guessResult==="correct"?"✓ CORRECT — DUPE WINS":"✗ WRONG — STAY HIDDEN"}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div style={{padding:16,borderTop:"1px solid #1a1a1a",flexShrink:0,display:"flex",flexDirection:"column",gap:8}}>
+        {/* DONE — advance turn */}
+        <button className="btn-p" onClick={()=>setCluePlayer(c=>c+1)} style={{padding:"18px 0",fontSize:20}}>
+          DONE →
+        </button>
+        {/* CALL VOTE — only shown after everyone has gone at least once */}
+        {allHadTurn&&(
+          <button className="btn-p" onClick={()=>{setVotes({});setVotingPlayer(0);setVoteResult(null);setScreen("VOTE");}} style={{
+            padding:"14px 0",background:"transparent",border:"1px solid #c8ff00",color:"#c8ff00",fontSize:16,
+          }}>
+            CALL A VOTE →
+          </button>
+        )}
+      </div>
+    </div>
+    );
+  }
+
+  // ── VOTE ──────────────────────────────────────────────
+  if(screen==="VOTE") {
+    const voter = active[votingPlayer];
+    if(!voter) return null;
+    return (
+      <div className="dr noise-bg" style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:24}}>
+        <style>{css}</style>
+        {revealing ? (
+          <div className="fade-in" style={{textAlign:"center"}}>
+            <div className="display pulse" style={{fontSize:72,color:"#c8ff00",lineHeight:1}}>COUNTING</div>
+            <div className="mono" style={{fontSize:11,color:"#555",letterSpacing:"0.15em",marginTop:10}}>PROCESSING VOTES</div>
+            <div style={{display:"flex",gap:8,justifyContent:"center",marginTop:24}}>
+              {[0,1,2].map(i=><div key={i} style={{width:10,height:10,background:"#c8ff00",clipPath:"polygon(50% 0%,100% 50%,50% 100%,0% 50%)",animation:`pulseAnim 0.7s ${i*0.2}s ease infinite`}}/>)}
+            </div>
+          </div>
+        ) : (
+          <div className="card-in" style={{width:"100%",maxWidth:360}}>
+            <div style={{background:"#0d0d0d",border:`1px solid ${voter.color.accent}`,padding:24}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,paddingBottom:16,borderBottom:"1px solid #1a1a1a"}}>
+                <Token p={voter} size={44}/>
+                <div>
+                  <div className="display" style={{fontSize:30,color:"#e8e8e8",lineHeight:1}}>{voter.name}</div>
+                  <div className="mono" style={{fontSize:10,color:"#555",letterSpacing:"0.1em",marginTop:3}}>
+                    VOTE {votingPlayer+1} / {active.length}
+                  </div>
+                </div>
+              </div>
+              <SectionLabel>WHO IS THE DUPE?</SectionLabel>
+              <div style={{display:"flex",flexDirection:"column",gap:7}}>
+                {active.filter(p=>p.id!==voter.id).map(p=>{
+                  const voted = votes[votingPlayer]===p.id;
+                  return (
+                    <button key={p.id} onClick={()=>castVote(p.id)} disabled={votes[votingPlayer]!==undefined} style={{
+                      display:"flex",alignItems:"center",gap:12,padding:"11px 14px",
+                      background:voted?p.color.bg:"#080808",
+                      border:`1px solid ${voted?p.color.accent:"#1e1e1e"}`,
+                      cursor:votes[votingPlayer]!==undefined?"default":"pointer",
+                      transition:"all 0.15s",
+                    }}
+                      onMouseEnter={e=>{if(!votes[votingPlayer])e.currentTarget.style.borderColor="#333";}}
+                      onMouseLeave={e=>{if(!voted)e.currentTarget.style.borderColor="#1e1e1e";}}
+                    >
+                      <Token p={p} size={36}/>
+                      <div style={{flex:1}}>
+                        <div className="display" style={{fontSize:20,color:voted?p.color.accent:"#e8e8e8",marginBottom:5}}>{p.name}</div>
+                        <div style={{height:2,background:"#1a1a1a"}}>
+                          {(() => { const cnt=susCount(p.id); const mx=active.length-1; const pct=mx>0?cnt/mx:0; return <div style={{height:"100%",width:`${pct*100}%`,background:pct>0.65?"#FF4545":pct>0.35?"#FFB830":"#42D693",transition:"width 0.4s"}}/>; })()}
+                        </div>
+                      </div>
+                      <span className="mono" style={{fontSize:11,color:voted?p.color.accent:"#555"}}>{susCount(p.id)}/{active.length-1}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {votes[votingPlayer]!==undefined&&(
+                <div className="mono pulse" style={{fontSize:11,color:"#444",textAlign:"center",marginTop:16,letterSpacing:"0.1em"}}>
+                  PASSING DEVICE TO NEXT PLAYER
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── VOTE RESULT ────────────────────────────────────────
+  if(screen==="VOTE_RESULT") {
+    const elim = players.find(p=>p.id===voteResult?.eliminatedId);
+    return (
+      <div className="dr noise-bg" style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:24}}>
+        <style>{css}</style>
+        <div className="card-in" style={{width:"100%",maxWidth:360,textAlign:"center"}}>
+          <div style={{background:"#0d0808",border:"1px solid #FF4545",padding:32}}>
+            <div className="display" style={{fontSize:68,color:"#FF4545",lineHeight:1}}>WRONG</div>
+            <div className="display" style={{fontSize:22,color:"#555",marginTop:2}}>DUPE STILL AT LARGE</div>
+            <div style={{height:1,background:"#2a1515",margin:"24px 0"}}/>
+            {elim&&<>
+              <Token p={elim} size={64} />
+              <div className="display" style={{fontSize:30,color:elim.color.accent,marginTop:12}}>{elim.name}</div>
+              <div className="mono" style={{fontSize:11,color:"#555",marginTop:4,letterSpacing:"0.12em"}}>WAS INNOCENT</div>
+            </>}
+            <div style={{display:"flex",justifyContent:"space-between",background:"#080808",border:"1px solid #2a1515",padding:"12px 16px",margin:"20px 0"}}>
+              <span className="mono" style={{fontSize:11,color:"#555",letterSpacing:"0.1em"}}>WRONG VOTES USED</span>
+              <span className="mono" style={{fontSize:11,color:"#FF4545"}}>{wrongVotes} / {maxWrong}</span>
+            </div>
+            <button className="btn-p" onClick={()=>{setRound(r=>r+1);setScreen("DISCUSSION");}} style={{padding:"16px 0"}}>
+              ROUND {round+1} →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── GAME END ───────────────────────────────────────────
+  if(screen==="GAME_END") {
+    const win = gameResult!=="BRIEFED_WIN";
+    return (
+      <div className="dr noise-bg" style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:24}}>
+        <style>{css}</style>
+        <div className="card-in" style={{width:"100%",maxWidth:390}}>
+          <div style={{background:win?"#0d0808":"#080f0a",border:`2px solid ${win?"#FF4545":"#42D693"}`,padding:32}}>
+            <div style={{textAlign:"center",marginBottom:24}}>
+              <div className="display" style={{fontSize:80,lineHeight:0.9,color:win?"#FF4545":"#42D693"}}>
+                {win?"DUPE":"CAUGHT"}
+              </div>
+              <div className="display" style={{fontSize:28,color:"#444",marginTop:6}}>
+                {win?"WINS":"BRIEFED WIN"}
+              </div>
+              <div className="mono" style={{fontSize:11,color:"#555",marginTop:8,letterSpacing:"0.12em"}}>
+                {gameResult==="IMPOSTER_WINS_GUESS"&&"DUPE GUESSED THE WORD CORRECTLY"}
+                {gameResult==="IMPOSTER_WINS_SURVIVAL"&&"DUPE SURVIVED ALL VOTES"}
+                {gameResult==="BRIEFED_WIN"&&"THE CREW WAS BRIEFED — DUPE EXPOSED"}
+              </div>
+            </div>
+            <div style={{height:1,background:"#2a2a2a",marginBottom:24}}/>
+            {imposter&&(
+              <div style={{background:"#080808",border:"1px solid #1a1a1a",padding:20,marginBottom:16}}>
+                <SectionLabel>THE DUPE WAS</SectionLabel>
+                <div style={{display:"flex",alignItems:"center",gap:14}}>
+                  <Token p={imposter} size={60}/>
+                  <div>
+                    <div className="display" style={{fontSize:34,color:imposter.color.accent,lineHeight:1}}>{imposter.name}</div>
+                    <div className="mono" style={{fontSize:11,color:"#555",marginTop:4}}>IMPOSTER</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:24}}>
+              <div style={{background:"#080808",border:"1px solid #1a1a1a",padding:"14px 16px"}}>
+                <SectionLabel>REAL WORD</SectionLabel>
+                <div className="display" style={{fontSize:26,color:"#c8ff00"}}>{wordPack?.word}</div>
+                <div className="mono" style={{fontSize:10,color:"#555",marginTop:2}}>{wordPack?.category}</div>
+              </div>
+              <div style={{background:"#080808",border:"1px solid #1a1a1a",padding:"14px 16px"}}>
+                <SectionLabel>DUPE HAD</SectionLabel>
+                <div className="display" style={{fontSize:26,color:"#FF4545"}}>{wordPack?.decoy}</div>
+                <div className="mono" style={{fontSize:10,color:"#555",marginTop:2}}>CLOSE BUT NOT IT</div>
+              </div>
+            </div>
+            <button className="btn-p" onClick={()=>setScreen("LOBBY")} style={{padding:"18px 0"}}>
+              PLAY AGAIN
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
+    ReactDOM.createRoot(document.getElementById('game-root')).render(<DupeGame />);
+  </script>
+</body>
+</html>
