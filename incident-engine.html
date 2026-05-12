@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Incident Automation Engine — Architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f; --bg2: #0d0d1a; --bg3: #111125;
+      --mint: #00ff87; --orange: #ff6b35; --blue: #38bdf8;
+      --purple: #a78bfa; --red: #ff4757; --yellow: #ffd32a;
+      --text: #f0eeff; --muted: #7b7a9a; --border: rgba(255,255,255,0.07);
+    }
+    html, body { min-height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+    body::after { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:2000; opacity:.35; }
+
+    nav { display:flex; justify-content:space-between; align-items:center; padding:1.2rem 3rem; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(7,7,15,0.95); backdrop-filter:blur(16px); z-index:100; }
+    .nav-logo { font-family:'Syne',sans-serif; font-weight:800; color:var(--mint); font-size:1rem; text-decoration:none; }
+    .nav-back { font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--muted); text-decoration:none; letter-spacing:.1em; text-transform:uppercase; transition:color .2s; }
+    .nav-back:hover { color:var(--text); }
+
+    .hero { padding:3rem 3rem 2rem; }
+    .hero-tag { font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--orange); letter-spacing:.15em; text-transform:uppercase; margin-bottom:.75rem; display:flex; align-items:center; gap:.6rem; }
+    .hero-tag::before { content:''; width:24px; height:1px; background:var(--orange); }
+    .hero-title { font-family:'Syne',sans-serif; font-weight:800; font-size:clamp(2rem,5vw,3.5rem); letter-spacing:-.03em; margin-bottom:.75rem; }
+    .hero-title span { color:var(--mint); }
+    .hero-desc { color:var(--muted); font-size:.95rem; line-height:1.7; max-width:680px; }
+
+    /* Stats bar */
+    .stats-bar { display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin:0 3rem; }
+    .stat-item { padding:1.2rem 1.5rem; border-right:1px solid var(--border); }
+    .stat-item:last-child { border-right:none; }
+    .stat-num { font-family:'Syne',sans-serif; font-weight:800; font-size:1.8rem; color:var(--mint); letter-spacing:-.03em; line-height:1; }
+    .stat-label { font-family:'DM Mono',monospace; font-size:.65rem; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-top:.3rem; }
+
+    /* Main layout */
+    .main { display:grid; grid-template-columns:1fr 340px; gap:0; margin:2rem 3rem 3rem; border:1px solid var(--border); }
+
+    /* Diagram */
+    .diagram-panel { padding:2.5rem; background:var(--bg); overflow:hidden; }
+    .diagram-title { font-family:'DM Mono',monospace; font-size:.7rem; color:var(--muted); letter-spacing:.15em; text-transform:uppercase; margin-bottom:2rem; }
+
+    #arch-svg { width:100%; height:auto; }
+
+    .arch-node { cursor:pointer; }
+    .arch-node rect, .arch-node circle { transition:filter .2s; }
+    .arch-node:hover rect { filter:brightness(1.3); }
+    .arch-node:hover circle { filter:brightness(1.3); }
+    .arch-node.active rect { filter:brightness(1.5) drop-shadow(0 0 12px currentColor); }
+
+    .side-panel { background:var(--bg2); border-left:1px solid var(--border); display:flex; flex-direction:column; }
+    .detail-header { padding:1.5rem; border-bottom:1px solid var(--border); }
+    .detail-hint { font-family:'DM Mono',monospace; font-size:.7rem; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+    .detail-name { font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem; margin-top:.4rem; min-height:2rem; }
+    .detail-tag { display:inline-block; font-family:'DM Mono',monospace; font-size:.65rem; padding:.2rem .6rem; border-radius:2px; margin-top:.4rem; letter-spacing:.06em; text-transform:uppercase; }
+    .detail-body { padding:1.5rem; flex:1; overflow-y:auto; }
+    .detail-desc { font-size:.88rem; color:var(--muted); line-height:1.75; margin-bottom:1.5rem; min-height:4rem; }
+    .detail-section { margin-bottom:1.2rem; }
+    .detail-section-title { font-family:'DM Mono',monospace; font-size:.65rem; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-bottom:.6rem; }
+    .detail-tech-list { display:flex; flex-wrap:wrap; gap:.4rem; }
+    .tech-tag { font-family:'DM Mono',monospace; font-size:.7rem; padding:.25rem .6rem; border-radius:2px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); color:var(--text); }
+
+    .flow-controls { padding:1rem 1.5rem; border-top:1px solid var(--border); display:flex; gap:.5rem; align-items:center; }
+    .flow-btn { font-family:'DM Mono',monospace; font-size:.7rem; padding:.5rem .9rem; border-radius:2px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; transition:all .2s; letter-spacing:.06em; text-transform:uppercase; }
+    .flow-btn:hover { border-color:var(--mint); color:var(--mint); }
+    .flow-btn.active { background:var(--mint); color:#000; border-color:var(--mint); font-weight:500; }
+    .flow-label { font-family:'DM Mono',monospace; font-size:.65rem; color:var(--muted); letter-spacing:.1em; margin-left:auto; }
+
+    .flow-dot { animation: flowAnim 2s linear infinite; }
+    @keyframes flowAnim { 0% { offset-distance: 0%; opacity:1; } 80% { opacity:1; } 100% { offset-distance: 100%; opacity:0; } }
+
+    .context-section { margin:0 3rem 4rem; padding:2.5rem; border:1px solid var(--border); background:rgba(13,13,26,0.6); }
+    .context-grid { display:grid; grid-template-columns:1fr 1fr; gap:2.5rem; }
+    .context-block-label { font-family:'DM Mono',monospace; font-size:.7rem; color:var(--orange); letter-spacing:.15em; text-transform:uppercase; margin-bottom:.75rem; display:flex; align-items:center; gap:.6rem; }
+    .context-block-label::before { content:''; width:20px; height:1px; background:var(--orange); }
+    .context-block h3 { font-family:'Syne',sans-serif; font-weight:700; font-size:1.15rem; margin-bottom:1rem; letter-spacing:-.01em; }
+    .context-block p { color:var(--muted); font-size:.88rem; line-height:1.75; }
+
+    @media(max-width:900px) {
+      nav, .hero { padding-left:1.5rem; padding-right:1.5rem; }
+      .stats-bar { margin:0 1.5rem; grid-template-columns:repeat(2,1fr); }
+      .main { grid-template-columns:1fr; margin:1.5rem; }
+      .side-panel { border-left:none; border-top:1px solid var(--border); }
+      .context-section { margin:0 1.5rem 2rem; padding:1.5rem; }
+      .context-grid { grid-template-columns:1fr; gap:1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">JS</a>
+    <a href="index.html" class="nav-back">← Back to Portfolio</a>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-tag">System Architecture · Case Study</div>
+    <h1 class="hero-title">Incident <span>Automation Engine</span></h1>
+    <p class="hero-desc">An event-driven incident automation system I worked on in production. Reduced manual ticket triage from ~30 minutes to near-zero across 20+ tickets/week. Click any component to explore how it works.</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-num">~30m → 0</div><div class="stat-label">Manual Time Per Ticket</div></div>
+    <div class="stat-item"><div class="stat-num">20+</div><div class="stat-label">Tickets Automated / Week</div></div>
+    <div class="stat-item"><div class="stat-num">11</div><div class="stat-label">System Components</div></div>
+    <div class="stat-item"><div class="stat-num">Production</div><div class="stat-label">Multi-Year Operation</div></div>
+  </div>
+
+  <div class="main">
+    <div class="diagram-panel">
+      <div class="diagram-title">// System Architecture — click a component to inspect</div>
+      <svg id="arch-svg" viewBox="0 0 760 520" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-mint" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#00ff87" opacity="0.7"/></marker>
+          <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#38bdf8" opacity="0.7"/></marker>
+          <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ff6b35" opacity="0.7"/></marker>
+          <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#a78bfa" opacity="0.7"/></marker>
+        </defs>
+
+        <g opacity="0.04" stroke="#ffffff" stroke-width="0.5">
+          <line x1="0" y1="65" x2="760" y2="65"/>
+          <line x1="0" y1="195" x2="760" y2="195"/>
+          <line x1="0" y1="325" x2="760" y2="325"/>
+          <line x1="0" y1="455" x2="760" y2="455"/>
+        </g>
+
+        <text x="14" y="48" font-family="DM Mono" font-size="9" fill="#7b7a9a" letter-spacing="2">SOURCES</text>
+        <text x="14" y="178" font-family="DM Mono" font-size="9" fill="#7b7a9a" letter-spacing="2">INGESTION</text>
+        <text x="14" y="308" font-family="DM Mono" font-size="9" fill="#7b7a9a" letter-spacing="2">PROCESSING</text>
+        <text x="14" y="438" font-family="DM Mono" font-size="9" fill="#7b7a9a" letter-spacing="2">CONSUMERS</text>
+
+        <rect x="0" y="55" width="760" height="120" fill="rgba(0,255,135,0.02)"/>
+        <rect x="0" y="185" width="760" height="120" fill="rgba(56,189,248,0.02)"/>
+        <rect x="0" y="315" width="760" height="120" fill="rgba(255,107,53,0.02)"/>
+        <rect x="0" y="445" width="760" height="70" fill="rgba(167,139,250,0.02)"/>
+
+        <path d="M 155 105 Q 155 145 280 145 Q 350 145 350 162" stroke="#00ff87" stroke-width="1.5" fill="none" stroke-dasharray="4,4" opacity="0.4" marker-end="url(#arrow-mint)" id="p1"/>
+        <path d="M 380 105 Q 380 135 380 162" stroke="#00ff87" stroke-width="1.5" fill="none" stroke-dasharray="4,4" opacity="0.4" marker-end="url(#arrow-mint)" id="p2"/>
+        <path d="M 605 105 Q 605 145 450 145 Q 415 145 415 162" stroke="#00ff87" stroke-width="1.5" fill="none" stroke-dasharray="4,4" opacity="0.4" marker-end="url(#arrow-mint)" id="p3"/>
+        <path d="M 380 212 L 380 242" stroke="#38bdf8" stroke-width="2" fill="none" marker-end="url(#arrow-blue)" opacity="0.6" id="p4"/>
+        <path d="M 330 268 Q 240 268 240 298" stroke="#38bdf8" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-blue)" id="p5"/>
+        <path d="M 430 268 Q 520 268 520 298" stroke="#38bdf8" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-blue)" id="p6"/>
+        <path d="M 240 348 Q 240 375 310 378" stroke="#ff6b35" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-orange)" id="p7"/>
+        <path d="M 520 348 Q 520 375 450 378" stroke="#ff6b35" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-orange)" id="p8"/>
+        <path d="M 330 408 Q 200 420 175 445" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-purple)" id="p9"/>
+        <path d="M 380 408 L 380 445" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-purple)" id="p10"/>
+        <path d="M 430 408 Q 560 420 585 445" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrow-purple)" id="p11"/>
+        <path d="M 310 388 Q 100 388 100 260 Q 100 200 100 180 Q 100 115 120 105" stroke="#ffd32a" stroke-width="1" fill="none" stroke-dasharray="3,5" opacity="0.25" marker-end="url(#arrow-orange)"/>
+
+        <g class="arch-node" data-id="monitoring" transform="translate(100,65)">
+          <rect width="110" height="44" rx="3" fill="#0d1a14" stroke="#00ff87" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#00ff87" opacity="0.8"/>
+          <text x="58" y="17" font-family="DM Mono" font-size="8.5" fill="#00ff87" text-anchor="middle" letter-spacing="0.5">MONITORING</text>
+          <text x="58" y="31" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Grafana Alerts</text>
+        </g>
+        <g class="arch-node" data-id="sysevents" transform="translate(325,65)">
+          <rect width="110" height="44" rx="3" fill="#0d1520" stroke="#38bdf8" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#38bdf8" opacity="0.8"/>
+          <text x="58" y="17" font-family="DM Mono" font-size="8.5" fill="#38bdf8" text-anchor="middle" letter-spacing="0.5">SYSTEM</text>
+          <text x="58" y="31" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Service Events</text>
+        </g>
+        <g class="arch-node" data-id="healthcheck" transform="translate(550,65)">
+          <rect width="110" height="44" rx="3" fill="#1a0d14" stroke="#ff4757" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#ff4757" opacity="0.8"/>
+          <text x="58" y="17" font-family="DM Mono" font-size="8.5" fill="#ff4757" text-anchor="middle" letter-spacing="0.5">HEALTH</text>
+          <text x="58" y="31" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Service Checks</text>
+        </g>
+        <g class="arch-node" data-id="eventbus" transform="translate(290,165)">
+          <rect width="180" height="50" rx="3" fill="#0a1520" stroke="#38bdf8" stroke-width="1.8" opacity="0.95"/>
+          <rect width="180" height="3" rx="1" fill="#38bdf8" opacity="0.7" y="0"/>
+          <text x="90" y="23" font-family="DM Mono" font-size="9.5" fill="#38bdf8" text-anchor="middle" letter-spacing="1">EVENT BUS</text>
+          <text x="90" y="39" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Message Queue / Pub-Sub</text>
+        </g>
+        <g class="arch-node" data-id="router" transform="translate(300,245)">
+          <rect width="160" height="50" rx="3" fill="#0a1520" stroke="#38bdf8" stroke-width="1.5" opacity="0.9"/>
+          <rect width="160" height="3" rx="1" fill="#38bdf8" opacity="0.5" y="0"/>
+          <text x="80" y="23" font-family="DM Mono" font-size="9.5" fill="#38bdf8" text-anchor="middle" letter-spacing="1">ROUTER</text>
+          <text x="80" y="39" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Rule-Based Dispatch</text>
+        </g>
+        <g class="arch-node" data-id="dedup" transform="translate(175,298)">
+          <rect width="130" height="50" rx="3" fill="#0d1a14" stroke="#00ff87" stroke-width="1.3" opacity="0.9"/>
+          <rect width="130" height="3" rx="1" fill="#00ff87" opacity="0.5" y="0"/>
+          <text x="65" y="22" font-family="DM Mono" font-size="8.5" fill="#00ff87" text-anchor="middle" letter-spacing="0.5">DEDUP ENGINE</text>
+          <text x="65" y="37" font-family="Inter" font-size="8.5" fill="#7b7a9a" text-anchor="middle">Noise Reduction</text>
+        </g>
+        <g class="arch-node" data-id="enrichment" transform="translate(455,298)">
+          <rect width="130" height="50" rx="3" fill="#130d1a" stroke="#a78bfa" stroke-width="1.3" opacity="0.9"/>
+          <rect width="130" height="3" rx="1" fill="#a78bfa" opacity="0.5" y="0"/>
+          <text x="65" y="22" font-family="DM Mono" font-size="8.5" fill="#a78bfa" text-anchor="middle" letter-spacing="0.5">ENRICHMENT</text>
+          <text x="65" y="37" font-family="Inter" font-size="8.5" fill="#7b7a9a" text-anchor="middle">Context Injection</text>
+        </g>
+        <g class="arch-node" data-id="ticketengine" transform="translate(280,358)">
+          <rect width="200" height="52" rx="3" fill="#1a100d" stroke="#ff6b35" stroke-width="2" opacity="0.97"/>
+          <rect width="200" height="4" rx="1" fill="#ff6b35" opacity="0.8" y="0"/>
+          <text x="100" y="25" font-family="DM Mono" font-size="10" fill="#ff6b35" text-anchor="middle" letter-spacing="1.5">TICKET ENGINE</text>
+          <text x="100" y="41" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Create · Route · Resolve · Notify</text>
+        </g>
+        <g class="arch-node" data-id="ticketsys" transform="translate(110,448)">
+          <rect width="130" height="44" rx="3" fill="#130d1a" stroke="#a78bfa" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#a78bfa" opacity="0.7"/>
+          <text x="68" y="18" font-family="DM Mono" font-size="8.5" fill="#a78bfa" text-anchor="middle" letter-spacing="0.5">TICKETING</text>
+          <text x="68" y="32" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Internal Ticket System</text>
+        </g>
+        <g class="arch-node" data-id="pipeline" transform="translate(315,448)">
+          <rect width="130" height="44" rx="3" fill="#0a1520" stroke="#38bdf8" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#38bdf8" opacity="0.7"/>
+          <text x="68" y="18" font-family="DM Mono" font-size="8.5" fill="#38bdf8" text-anchor="middle" letter-spacing="0.5">DATA STREAM</text>
+          <text x="68" y="32" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">Real-time Pipeline</text>
+        </g>
+        <g class="arch-node" data-id="notification" transform="translate(520,448)">
+          <rect width="130" height="44" rx="3" fill="#0d1a14" stroke="#00ff87" stroke-width="1.2" opacity="0.9"/>
+          <rect width="4" height="44" rx="2" fill="#00ff87" opacity="0.7"/>
+          <text x="68" y="18" font-family="DM Mono" font-size="8.5" fill="#00ff87" text-anchor="middle" letter-spacing="0.5">NOTIFICATIONS</text>
+          <text x="68" y="32" font-family="Inter" font-size="9" fill="#7b7a9a" text-anchor="middle">On-call Alerts</text>
+        </g>
+
+        <g id="flow-dots"></g>
+      </svg>
+    </div>
+
+    <div class="side-panel">
+      <div class="detail-header">
+        <div class="detail-hint">// Select a component</div>
+        <div class="detail-name" id="detailName">—</div>
+        <div id="detailTag"></div>
+      </div>
+      <div class="detail-body">
+        <p class="detail-desc" id="detailDesc">Click any component in the architecture diagram to see its role and the technologies behind it.</p>
+        <div id="detailTechSection" style="display:none">
+          <div class="detail-section">
+            <div class="detail-section-title">Technologies</div>
+            <div class="detail-tech-list" id="detailTech"></div>
+          </div>
+        </div>
+      </div>
+      <div class="flow-controls">
+        <button class="flow-btn active" id="flowToggle">⏸ Pause Flow</button>
+        <span class="flow-label" id="flowLabel">Events flowing</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="context-section">
+    <div class="context-grid">
+      <div class="context-block">
+        <div class="context-block-label">Why this matters</div>
+        <h3>Before automation</h3>
+        <p>An on-call engineer would receive a page, look up the affected service, check runbooks, manually create a ticket, route it to the right team, and notify the on-call rotation — typically ~30 minutes per incident. Multiply that by 20+ incidents per week and you get a meaningful chunk of engineering time consumed by triage that follows a predictable pattern.</p>
+      </div>
+      <div class="context-block">
+        <div class="context-block-label">Operating it in production</div>
+        <h3>Tradeoffs to know</h3>
+        <p>Rules-based routing is fast and inspectable but doesn't generalize to novel incident types — works because the service catalog is stable. Deduplication uses a fixed time window, which sometimes collapses related but distinct incidents. Building a system like this is one thing; running it through service migrations, schema changes, and on-call rotations is where the real lessons live.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const components = {
+      monitoring: {
+        name: 'Monitoring Alerts', tag: 'Source Layer', tagColor: '#00ff87',
+        desc: 'Grafana-based monitoring that watches service health, latency, and error rates. When thresholds are breached, alerts fire into the event bus. Primary trigger source for production incidents.',
+        tech: ['Grafana', 'Prometheus', 'Webhooks']
+      },
+      sysevents: {
+        name: 'System Events', tag: 'Source Layer', tagColor: '#38bdf8',
+        desc: 'Internal event stream emitted by platform services when state changes occur — deployments, pod restarts, config changes, health state transitions. Structured JSON payloads with service metadata and severity.',
+        tech: ['Kubernetes Events', 'Python', 'JSON', 'REST APIs']
+      },
+      healthcheck: {
+        name: 'Health Checks', tag: 'Source Layer', tagColor: '#ff4757',
+        desc: 'Periodic liveness and readiness probe results from Kubernetes and internal health endpoints. Failed probes become structured health events injected into the pipeline. Catches silent failures that don\'t generate explicit alerts.',
+        tech: ['Kubernetes Probes', 'HTTP Health APIs', 'Python', 'Bash']
+      },
+      eventbus: {
+        name: 'Event Bus', tag: 'Ingestion Layer', tagColor: '#38bdf8',
+        desc: 'Central pub-sub message queue that decouples event producers from consumers. Provides buffering and at-least-once delivery semantics to handle spikes without losing events. Keeps producers and consumers independently deployable.',
+        tech: ['Message Queue', 'Pub-Sub', 'Python', 'Async I/O']
+      },
+      router: {
+        name: 'Routing Engine', tag: 'Processing Layer', tagColor: '#38bdf8',
+        desc: 'Rule-based dispatcher that classifies incoming events by type, severity, and service ownership, then routes to deduplication or enrichment handlers. Rules are config-driven so routing logic can be updated without code deploys.',
+        tech: ['Python', 'Rules Engine', 'Config-Driven', 'Pattern Matching']
+      },
+      dedup: {
+        name: 'Deduplication Engine', tag: 'Processing Layer', tagColor: '#00ff87',
+        desc: 'Identifies and suppresses duplicate events within a time window. Without this, a single flapping service could generate hundreds of tickets in minutes. Uses fingerprinting on event signatures (service + type + severity) to collapse repeated events.',
+        tech: ['Python', 'Fingerprinting', 'TTL Windows', 'In-Memory Cache']
+      },
+      enrichment: {
+        name: 'Enrichment Service', tag: 'Processing Layer', tagColor: '#a78bfa',
+        desc: 'Annotates raw incident events with context before they reach the ticket engine — service ownership, on-call schedules, runbook links. Engineers arriving on-call see fully populated tickets rather than raw alert dumps.',
+        tech: ['Python', 'Internal APIs', 'Service Registry', 'Runbook Index']
+      },
+      ticketengine: {
+        name: 'Ticket Engine', tag: 'Core Service', tagColor: '#ff6b35',
+        desc: 'The heart of the system. Receives enriched, deduplicated incidents and handles the full ticket lifecycle: creation with pre-populated context, routing, status tracking, and auto-resolution when the underlying issue clears. This is where the ~30 min → 0 manual savings comes from.',
+        tech: ['Python', 'Ticketing APIs', 'State Machine', 'Kubernetes', 'Terraform']
+      },
+      ticketsys: {
+        name: 'Ticketing System', tag: 'Consumer Layer', tagColor: '#a78bfa',
+        desc: 'Primary output destination. Tickets arrive with full context — severity, service owner, enriched metadata, runbook links. Engineers see populated tickets rather than raw alert dumps.',
+        tech: ['Ticketing APIs', 'REST', 'Webhooks', 'JSON']
+      },
+      pipeline: {
+        name: 'Real-time Data Stream', tag: 'Consumer Layer', tagColor: '#38bdf8',
+        desc: 'Structured incident data streamed to internal consumers — dashboards, analytics pipelines, and reliability tooling. Events are transformed and serialized as they flow through, so downstream teams can build their own tooling on top.',
+        tech: ['Python', 'Streaming', 'JSON Transforms']
+      },
+      notification: {
+        name: 'Notification Service', tag: 'Consumer Layer', tagColor: '#00ff87',
+        desc: 'Routes alerts to on-call engineers based on severity and time of day. Critical incidents trigger immediate pager alerts; lower-severity events go to team Slack channels. Respects on-call rotation schedules.',
+        tech: ['Python', 'Pager APIs', 'Slack APIs', 'On-call Schedules']
+      }
+    };
+
+    document.querySelectorAll('.arch-node').forEach(node => {
+      node.addEventListener('click', () => {
+        const id = node.dataset.id;
+        const data = components[id];
+        if (!data) return;
+        document.querySelectorAll('.arch-node').forEach(n => n.classList.remove('active'));
+        node.classList.add('active');
+        document.getElementById('detailName').textContent = data.name;
+        const tag = document.getElementById('detailTag');
+        tag.textContent = data.tag;
+        tag.className = 'detail-tag';
+        tag.style.background = data.tagColor + '22';
+        tag.style.color = data.tagColor;
+        tag.style.border = `1px solid ${data.tagColor}44`;
+        document.getElementById('detailDesc').textContent = data.desc;
+        const techSection = document.getElementById('detailTechSection');
+        const techList = document.getElementById('detailTech');
+        techList.innerHTML = data.tech.map(t => `<span class="tech-tag">${t}</span>`).join('');
+        techSection.style.display = 'block';
+      });
+    });
+
+    const paths = ['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10','p11'];
+    const dotColors = { p1:'#00ff87', p2:'#38bdf8', p3:'#ff4757', p4:'#38bdf8', p5:'#38bdf8', p6:'#38bdf8', p7:'#ff6b35', p8:'#ff6b35', p9:'#a78bfa', p10:'#38bdf8', p11:'#00ff87' };
+    let flowActive = true;
+
+    function createDot(pathId, delay) {
+      const pathEl = document.getElementById(pathId);
+      if (!pathEl) return;
+      const len = pathEl.getTotalLength();
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('r', '3.5');
+      dot.setAttribute('fill', dotColors[pathId] || '#00ff87');
+      dot.setAttribute('opacity', '0.9');
+      dot.style.filter = `drop-shadow(0 0 4px ${dotColors[pathId]})`;
+      document.getElementById('flow-dots').appendChild(dot);
+      let start = null;
+      const duration = 1800 + Math.random() * 800;
+      function animate(ts) {
+        if (!start) start = ts + delay;
+        const elapsed = ts - start;
+        if (elapsed < 0) { requestAnimationFrame(animate); return; }
+        const t = (elapsed % duration) / duration;
+        const opacity = t > 0.85 ? 1 - (t - 0.85) / 0.15 : 1;
+        const pt = pathEl.getPointAtLength(t * len);
+        dot.setAttribute('cx', pt.x);
+        dot.setAttribute('cy', pt.y);
+        dot.setAttribute('opacity', flowActive ? opacity * 0.9 : 0);
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+    }
+
+    paths.forEach(pid => {
+      const count = pid === 'p4' ? 3 : 2;
+      for (let i = 0; i < count; i++) createDot(pid, i * (1800 / count));
+    });
+
+    const flowToggle = document.getElementById('flowToggle');
+    const flowLabel = document.getElementById('flowLabel');
+    flowToggle.addEventListener('click', () => {
+      flowActive = !flowActive;
+      flowToggle.textContent = flowActive ? '⏸ Pause Flow' : '▶ Resume Flow';
+      flowToggle.classList.toggle('active', flowActive);
+      flowLabel.textContent = flowActive ? 'Events flowing' : 'Flow paused';
+    });
+  </script>
+</body>
+</html>
