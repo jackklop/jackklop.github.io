@@ -27,13 +27,9 @@
       --border: rgba(255,255,255,0.07);
     }
     html { scroll-behavior: smooth; }
-    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; cursor: none; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
     #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
     nav, section, footer, .stats-bar, .marquee-wrapper { position: relative; z-index: 1; }
-    .cursor { position: fixed; width: 10px; height: 10px; background: var(--mint); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); mix-blend-mode: difference; transition: width 0.2s, height 0.2s, background 0.2s; }
-    .cursor.hovering { width: 20px; height: 20px; background: var(--orange); }
-    .cursor-ring { position: fixed; width: 38px; height: 38px; border: 1.5px solid rgba(0,255,135,0.5); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%, -50%); transition: transform 0.25s ease, width 0.25s, height 0.25s, border-color 0.2s; }
-    .cursor-ring.hovering { width: 52px; height: 52px; border-color: var(--orange); }
     body::after { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 2000; opacity: 0.35; }
     nav { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 4rem; z-index: 100; background: linear-gradient(to bottom, rgba(7,7,15,0.9), transparent); backdrop-filter: blur(16px); }
     .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: 0.05em; color: var(--mint); }
@@ -52,7 +48,7 @@
     .cursor-blink { display: inline-block; width: 2px; height: 1em; background: var(--mint); margin-left: 2px; vertical-align: middle; animation: blink 1s step-end infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
     .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.8s 0.8s forwards; }
-    .btn { font-family: 'DM Mono', monospace; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.9rem 2rem; border-radius: 3px; text-decoration: none; transition: all 0.2s; cursor: none; }
+    .btn { font-family: 'DM Mono', monospace; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.9rem 2rem; border-radius: 3px; text-decoration: none; transition: all 0.2s; cursor: pointer; }
     .btn-primary { background: var(--mint); color: #000; font-weight: 500; }
     .btn-primary:hover { background: #00e87a; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,255,135,0.25); }
     .btn-secondary { border: 1px solid var(--border); color: var(--text); background: transparent; }
@@ -121,7 +117,7 @@
     .contact-email::after { content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--mint), var(--orange)); transform: scaleX(0); transition: transform 0.3s; transform-origin: left; }
     .contact-email:hover { color: var(--mint); }
     .contact-email:hover::after { transform: scaleX(1); }
-    .copy-btn { font-family: 'DM Mono', monospace; font-size: 0.72rem; padding: 0.5rem 1.2rem; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 2px; cursor: none; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.2s; margin-top: 1rem; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .copy-btn { font-family: 'DM Mono', monospace; font-size: 0.72rem; padding: 0.5rem 1.2rem; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 2px; cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.2s; margin-top: 1rem; display: inline-flex; align-items: center; gap: 0.4rem; }
     .copy-btn:hover { border-color: var(--mint); color: var(--mint); }
     .copy-btn.copied { border-color: var(--mint); color: var(--mint); background: rgba(0,255,135,0.08); }
     .social-links { display: flex; justify-content: center; gap: 2rem; margin-top: 2.5rem; }
@@ -139,6 +135,11 @@
       .stats-bar { flex-wrap: wrap; } .stat-item { flex: 1 1 50%; }
       footer { padding: 1.5rem; flex-direction: column; gap: 0.5rem; }
     }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+      .hero-tag, .hero-name, .hero-desc, .hero-typewriter, .hero-cta, .hero-scroll, .fade-in { opacity: 1 !important; transform: none !important; }
+      .marquee-track, .scroll-line, .cursor-blink { animation: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -148,8 +149,9 @@
     (function() {
       const canvas = document.getElementById('particle-canvas');
       const ctx = canvas.getContext('2d');
-      let W, H, particles, mouse = { x: -9999, y: -9999 };
-      const COLORS = ['#00ff87','#a78bfa','#38bdf8','#ff6b35'];
+      let W, H, particles, mouse = { x: -9999, y: -9999 }, rafId = null;
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const COLORS = ['#00ff87','#2dd4bf','#4a5a6a'];
       function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
       function Particle() {
         this.x = Math.random()*W; this.y = Math.random()*H;
@@ -180,7 +182,7 @@
         ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
         ctx.fillStyle=this.color; ctx.globalAlpha=this.alpha; ctx.fill();
       };
-      function init() { resize(); particles=Array.from({length:90},()=>new Particle()); }
+      function init() { resize(); particles=Array.from({length:35},()=>new Particle()); }
       function drawConnections() {
         for(let i=0;i<particles.length;i++) {
           for(let j=i+1;j<particles.length;j++) {
@@ -203,39 +205,28 @@
           }
         }
       }
-      function animate() {
+      function renderFrame() {
         ctx.clearRect(0,0,W,H);
         drawConnections();
         particles.forEach(p=>{p.update();p.draw();});
         ctx.globalAlpha=1;
-        requestAnimationFrame(animate);
       }
+      function animate() {
+        renderFrame();
+        rafId = requestAnimationFrame(animate);
+      }
+      function start() { if(rafId===null && !document.hidden) animate(); }
+      function stop() { if(rafId!==null){ cancelAnimationFrame(rafId); rafId=null; } }
       window.addEventListener('resize',resize);
       window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
       window.addEventListener('mouseleave',()=>{mouse.x=-9999;mouse.y=-9999;});
-      init(); animate();
+      document.addEventListener('visibilitychange',()=>{ document.hidden ? stop() : start(); });
+      init();
+      if(reduceMotion){ renderFrame(); } else { start(); }
     })();
   </script>
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
-
-    function Cursor() {
-      const [pos,setPos]=useState({x:-100,y:-100});
-      const [ring,setRing]=useState({x:-100,y:-100});
-      const [hovering,setHovering]=useState(false);
-      useEffect(()=>{
-        const move=e=>setPos({x:e.clientX,y:e.clientY});
-        const moveRing=e=>setTimeout(()=>setRing({x:e.clientX,y:e.clientY}),60);
-        const over=e=>{if(e.target.closest('a,button'))setHovering(true);};
-        const out=e=>{if(e.target.closest('a,button'))setHovering(false);};
-        window.addEventListener('mousemove',move);
-        window.addEventListener('mousemove',moveRing);
-        document.addEventListener('mouseover',over);
-        document.addEventListener('mouseout',out);
-        return()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mousemove',moveRing);document.removeEventListener('mouseover',over);document.removeEventListener('mouseout',out);};
-      },[]);
-      return(<><div className={`cursor${hovering?' hovering':''}`} style={{left:pos.x,top:pos.y}}/><div className={`cursor-ring${hovering?' hovering':''}`} style={{left:ring.x,top:ring.y}}/></>);
-    }
 
     function Typewriter({phrases}) {
       const [display,setDisplay]=useState('');
@@ -337,7 +328,6 @@
         return()=>obs.disconnect();
       },[]);
       return(<>
-        <Cursor/>
         <nav style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div className="nav-logo">JS</div>
           <div className="nav-links">
