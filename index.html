@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jack Siu — Software Engineer</title>
-  <meta name="description" content="Jack Siu — Backend and full-stack software engineer with 5+ years building distributed systems, real-time pipelines, and consumer apps." />
-  <meta property="og:title" content="Jack Siu — Software Engineer" />
-  <meta property="og:description" content="Backend and full-stack engineer. 5+ years at Oracle Cloud Infrastructure. Built apps shipped to App Store & Google Play." />
+  <title>Jack Siu — Platform / SRE Engineer</title>
+  <meta name="description" content="Jack Siu — Platform &amp; Site Reliability Engineer with 5+ years building production infrastructure, observability stacks, and incident automation for hyperscale cloud." />
+  <meta property="og:title" content="Jack Siu — Platform / SRE Engineer" />
+  <meta property="og:description" content="Platform &amp; SRE engineer. 5+ years at Oracle Cloud Infrastructure. Terraform, Kubernetes, Prometheus/Grafana, incident automation." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://jacksiu.dev" />
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Jack Siu — Software Engineer" />
-  <meta name="twitter:description" content="Backend and full-stack engineer. 5+ years experience. Real systems, real products." />
+  <meta name="twitter:title" content="Jack Siu — Platform / SRE Engineer" />
+  <meta name="twitter:description" content="Platform &amp; Site Reliability engineer. 5+ years building infrastructure that stays up." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -283,24 +283,24 @@
     }
 
     const skills=[
-      {label:"Languages",tags:["Python","JavaScript","TypeScript","Java","SQL","Bash","C#"]},
-      {label:"Frontend",tags:["React","React Native","Angular","HTML/CSS","jQuery","Bootstrap"]},
-      {label:"Backend & Cloud",tags:["Kubernetes","Docker","Terraform","REST APIs","CI/CD","Linux","OCI"]},
-      {label:"Observability",tags:["Grafana","Kubernetes","Linux","OCI"]},
+      {label:"Cloud & Infrastructure",tags:["Terraform","Kubernetes","Docker","Helm","OCI","Linux","Vault"]},
+      {label:"Observability & Reliability",tags:["Prometheus","Grafana","Incident Automation","On-Call","Alerting","Runbooks"]},
+      {label:"CI/CD & Automation",tags:["Jenkins","Git-based Pipelines","IaC","Maven","GitOps / ArgoCD"]},
+      {label:"Languages",tags:["Python","Bash","Go","TypeScript","Node.js","SQL"]},
     ];
     const projects=[
-      {num:"01",name:"pebbl.",desc:"iOS and Android photo booth app with camera filters, sticker overlays, and a freemium subscription model. Shipped to App Store and Google Play with full CI/CD pipeline.",stack:["React Native","Expo","CI/CD"],link:"https://pebbl-photobooth.carrd.co",linkLabel:"View project",color:"c1"},
-      {num:"02",name:"SmartMaze",desc:"Full-stack AI maze solver implementing BFS, A*, Hill Climbing, and Genetic Algorithms. Watch them compete live in the interactive demo.",stack:["Python","Tkinter","p5.js","JavaScript"],link:"maze.html",linkLabel:"Live Demo",color:"c2"},
-      {num:"03",name:"Incident Automation Engine",desc:"Event-driven distributed system that ingests production alerts, auto-routes and resolves incidents, and streams structured data to downstream consumers — eliminating manual triage on a high-availability critical path.",stack:["Python","Kubernetes","Terraform"],link:"incident-engine.html",linkLabel:"View Architecture",color:"c3"},
-      {num:"04",name:"DUPE",desc:"A pass-the-phone social deduction party game for 3–8 players. Everyone gets a secret word — except the Dupe, who gets a loose decoy. Give clues, hunt the outsider, vote them out. Custom SVG avatars, 110+ word packs, zero setup.",stack:["React","SVG","Game Design"],link:"https://play-dupe.vercel.app",linkLabel:"Play Now",color:"c2"},
+      {num:"01",name:"Incident Automation Engine",desc:"Event-driven distributed system that ingests production alerts, auto-routes and resolves incidents, and streams structured telemetry to downstream consumers — eliminating ~10 hours/week of on-call triage on a high-availability critical path.",stack:["Python","Kubernetes","Terraform"],link:"incident-engine.html",linkLabel:"View Architecture",color:"c3"},
+      {num:"02",name:"pebbl.",desc:"iOS and Android photo booth app with camera filters, sticker overlays, and a freemium subscription model. Shipped to App Store and Google Play with a full CI/CD pipeline and RevenueCat monetization.",stack:["React Native","Expo","CI/CD"],link:"https://pebbl-photobooth.carrd.co",linkLabel:"View project",color:"c1"},
+      {num:"03",name:"DUPE",desc:"A pass-the-phone social deduction party game for 3–8 players. Everyone gets a secret word — except the Dupe, who gets a loose decoy. Give clues, hunt the outsider, vote them out. Custom SVG avatars, 110+ word packs, zero setup.",stack:["React","SVG","Game Design"],link:"https://play-dupe.vercel.app",linkLabel:"Play Now",color:"c2"},
+      {num:"04",name:"SmartMaze",desc:"Full-stack AI maze solver implementing BFS, A*, Hill Climbing, and Genetic Algorithms. Watch them compete live in the interactive demo.",stack:["Python","Tkinter","p5.js","JavaScript"],link:"maze.html",linkLabel:"Live Demo",color:"c2"},
       {num:"05",name:"AI Property Manager",desc:"AI agent that automates end-to-end property management — tenant communication, maintenance scheduling, and lease workflows. Built with LLM-powered automation and real-time integrations.",stack:["Python","React","LLMs"],link:null,linkLabel:"Coming Soon",color:"c1"},
     ];
     const experience=[
-      {company:"Oracle Cloud Infrastructure",dates:"June 2022 — Present",location:"Remote",title:"Software Development Engineer, TechOps",bullets:["Built event-driven backend service reducing ticket handling from ~30 min to near zero for 20+ tickets/week","Maintained real-time data pipelines streaming incident data to internal consumers across the org","Owned Terraform + Kubernetes infrastructure deployments with full observability stack","Reduced engineer onboarding time by 60–70% through developer tooling automation","On-call rotation: Grafana investigation, incident triage, post-mortems"]},
-      {company:"pebbl.",dates:"2024 — Present",location:"Remote",title:"Founder & Software Development Engineer",bullets:["Shipped full-stack iOS/Android app from zero to production on App Store and Google Play","Built freemium model with in-app subscriptions; iterated using analytics and user feedback"]},
-      {company:"CDM Smith",dates:"Aug 2020 — May 2022",location:"Philadelphia, PA",title:"Full Stack Software Engineer",bullets:["Built Angular (TypeScript) + Oracle backend apps for government clients","Implemented GeoJSON data pipelines and interactive map visualizations","Maintained PL/SQL data pipelines for sensitive government reporting"]},
+      {company:"Oracle Cloud Infrastructure",dates:"June 2022 — April 2026",location:"Seattle, WA",title:"Software Development Engineer II, Data Platform",bullets:["Architected multi-region infrastructure on OCI with Terraform + Kubernetes; codified provisioning across distributed data services","Built Prometheus + Grafana observability that surfaced regressions early — alerting prevented a customer-facing outage on a major downstream consumer","Automated incident triage with an event-driven service that auto-creates, routes, and resolves tickets — cutting ~10 hours/week of on-call toil","Engineered real-time streaming pipelines emitting incident telemetry to internal consumers","Cut developer onboarding time 60–70% with self-serve tooling; authored runbooks adopted org-wide","Hardened security: migrated hardcoded credentials to Vault, remediated CVEs, patched dependencies across services"]},
+      {company:"pebbl.",dates:"2024 — Present",location:"Remote",title:"Lead Software Engineer & Founder",bullets:["Shipped a cross-platform iOS/Android app from zero to production on App Store and Google Play","Designed CI/CD pipelines and backend services for real-time image processing and content delivery","Built subscription monetization via RevenueCat with in-app purchases and analytics"]},
+      {company:"Trinnex",dates:"Aug 2020 — May 2022",location:"Philadelphia, PA",title:"Backend Software Engineer",bullets:["Built and shipped full-stack features (Angular/TypeScript, Node.js, Oracle) for secure government platforms under strict compliance","Engineered backend data pipelines and GeoJSON visualization services","Optimized PL/SQL systems for query performance across compliance-bound datasets"]},
     ];
-    const marqueeItems=["Python","React","Kubernetes","TypeScript","Terraform","Docker","Grafana","Node.js","SQL","CI/CD","REST APIs","React Native","Angular","Linux","OCI"];
+    const marqueeItems=["Terraform","Kubernetes","Prometheus","Grafana","Docker","Helm","Vault","Python","Bash","Go","CI/CD","Jenkins","ArgoCD","Linux","OCI","IaC","Observability"];
 
     function CopyEmail() {
       const [copied, setCopied] = useState(false);
@@ -348,10 +348,10 @@
           <a href="Jack_Siu_Resume.pdf" download className="btn btn-secondary" style={{padding:"0.5rem 1.2rem",fontSize:"0.72rem",whiteSpace:"nowrap"}}>↓ Resume</a>
         </nav>
         <section className="hero">
-          <div className="hero-tag">Software Engineer</div>
+          <div className="hero-tag">Platform · Site Reliability Engineer</div>
           <h1 className="hero-name">Jack<br/><span className="accent">Siu</span></h1>
-          <p className="hero-desc">Backend and full-stack engineer building high-availability distributed systems, real-time data pipelines, and products people actually use.</p>
-          <Typewriter phrases={["Backend Engineer.","Systems Builder.","Problem Solver.","Rock Climber.","Cat Dad. 🐱"]}/>
+          <p className="hero-desc">Platform &amp; SRE engineer building production infrastructure, observability, and incident automation for hyperscale cloud — the systems that keep everything else running.</p>
+          <Typewriter phrases={["Platform Engineer.","Site Reliability Engineer.","Terraform + Kubernetes.","Automating on-call away.","Cat Dad. 🐱"]}/>
           <div className="hero-cta">
             <a href="#projects" className="btn btn-primary">View Work</a>
             <a href="#contact" className="btn btn-secondary">Get in Touch</a>
@@ -359,7 +359,7 @@
           <div className="hero-scroll"><div className="scroll-line"/>Scroll</div>
         </section>
         <div className="stats-bar">
-          {[{num:5,suffix:'+',label:'Years Experience'},{num:3,suffix:'',label:'Apps Shipped to Consumers'},{num:5,suffix:'',label:'Languages in Production'},{num:'∞',suffix:'',label:'Cups of Coffee'}].map((s,i)=>(
+          {[{num:5,suffix:'+',label:'Years in Production Infra'},{num:70,suffix:'%',label:'Onboarding Time Cut'},{num:10,suffix:'hrs',label:'On-Call Toil Killed / Week'},{num:'∞',suffix:'',label:'Cups of Coffee'}].map((s,i)=>(
             <div className="stat-item" key={i}>
               <div className="stat-num"><Counter target={s.num} suffix={s.suffix}/></div>
               <div className="stat-label">{s.label}</div>
@@ -420,7 +420,7 @@
         <section id="contact" className="contact-section" ref={contactRef}>
           <div className="section-label fade-in" style={{justifyContent:'center'}}>Let's work together</div>
           <h2 className="section-title fade-in" style={{marginBottom:'1.5rem'}}>Get in Touch</h2>
-          <p className="fade-in" style={{color:'var(--muted)',marginBottom:'2rem',fontSize:'1rem'}}>Open to full-time roles and interesting problems.</p>
+          <p className="fade-in" style={{color:'var(--muted)',marginBottom:'2rem',fontSize:'1rem'}}>Open to Platform, SRE, and Infrastructure roles — NYC or remote.</p>
           <a href="mailto:jacksiu.dev@gmail.com" className="contact-email fade-in">jacksiu.dev@gmail.com</a>
           <div className="fade-in" style={{marginTop:'1.2rem'}}>
             <CopyEmail />
