@@ -1,433 +1,802 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jack Siu — Platform / SRE Engineer</title>
-  <meta name="description" content="Jack Siu — Platform &amp; Site Reliability Engineer with 5+ years building production infrastructure, observability stacks, and incident automation for hyperscale cloud." />
-  <meta property="og:title" content="Jack Siu — Platform / SRE Engineer" />
-  <meta property="og:description" content="Platform &amp; SRE engineer. 5+ years at Oracle Cloud Infrastructure. Terraform, Kubernetes, Prometheus/Grafana, incident automation." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://jacksiu.dev" />
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Jack Siu — Platform / SRE Engineer" />
-  <meta name="twitter:description" content="Platform &amp; Site Reliability engineer. 5+ years building infrastructure that stays up." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #07070f; --bg2: #0d0d1a;
-      --mint: #00ff87; --orange: #ff6b35;
-      --blue: #38bdf8; --purple: #a78bfa;
-      --text: #f0eeff; --muted: #7b7a9a;
-      --border: rgba(255,255,255,0.07);
-    }
-    html { scroll-behavior: smooth; }
-    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
-    #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-    nav, section, footer, .stats-bar, .marquee-wrapper { position: relative; z-index: 1; }
-    body::after { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 2000; opacity: 0.35; }
-    nav { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 4rem; z-index: 100; background: linear-gradient(to bottom, rgba(7,7,15,0.9), transparent); backdrop-filter: blur(16px); }
-    .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: 0.05em; color: var(--mint); }
-    .nav-links { display: flex; gap: 2.5rem; }
-    .nav-links a { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--muted); text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s; }
-    .nav-links a:hover { color: var(--text); }
-    .nav-links a.active { color: var(--mint); }
-    .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 8rem 4rem 4rem; position: relative; overflow: hidden; }
-    .hero-tag { font-family: 'DM Mono', monospace; font-size: 0.82rem; color: var(--orange); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; opacity: 0; animation: fadeUp 0.8s 0.2s forwards; }
-    .hero-tag::before { content: ''; display: block; width: 32px; height: 1px; background: var(--orange); }
-    .hero-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(4rem, 10vw, 9rem); line-height: 0.9; letter-spacing: -0.03em; margin-bottom: 1.5rem; opacity: 0; animation: fadeUp 0.8s 0.4s forwards; }
-    .hero-name span.accent { color: var(--mint); }
-    .hero-name span.accent2 { color: var(--orange); }
-    .hero-desc { font-size: 1.15rem; color: var(--muted); max-width: 520px; line-height: 1.75; margin-bottom: 1.5rem; font-weight: 300; opacity: 0; animation: fadeUp 0.8s 0.6s forwards; }
-    .hero-typewriter { font-family: 'DM Mono', monospace; font-size: 0.9rem; color: var(--mint); margin-bottom: 2.5rem; letter-spacing: 0.05em; opacity: 0; animation: fadeUp 0.8s 0.7s forwards; min-height: 1.4em; }
-    .cursor-blink { display: inline-block; width: 2px; height: 1em; background: var(--mint); margin-left: 2px; vertical-align: middle; animation: blink 1s step-end infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-    .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.8s 0.8s forwards; }
-    .btn { font-family: 'DM Mono', monospace; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.9rem 2rem; border-radius: 3px; text-decoration: none; transition: all 0.2s; cursor: pointer; }
-    .btn-primary { background: var(--mint); color: #000; font-weight: 500; }
-    .btn-primary:hover { background: #00e87a; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,255,135,0.25); }
-    .btn-secondary { border: 1px solid var(--border); color: var(--text); background: transparent; }
-    .btn-secondary:hover { border-color: var(--mint); color: var(--mint); }
-    .hero-scroll { position: absolute; bottom: 2.5rem; left: 4rem; font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; display: flex; align-items: center; gap: 0.75rem; opacity: 0; animation: fadeUp 0.8s 1.2s forwards; }
-    .scroll-line { width: 1px; height: 40px; background: linear-gradient(to bottom, var(--muted), transparent); animation: scrollPulse 2s ease-in-out infinite; }
-    @keyframes scrollPulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
-    .stats-bar { display: flex; gap: 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: rgba(13,13,26,0.7); backdrop-filter: blur(12px); }
-    .stat-item { flex: 1; padding: 2rem; border-right: 1px solid var(--border); text-align: center; transition: background 0.2s; }
-    .stat-item:last-child { border-right: none; }
-    .stat-item:hover { background: rgba(0,255,135,0.04); }
-    .stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.5rem; color: var(--mint); letter-spacing: -0.03em; line-height: 1; }
-    .stat-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.4rem; }
-    .marquee-wrapper { overflow: hidden; border-bottom: 1px solid var(--border); padding: 1rem 0; background: rgba(7,7,15,0.8); }
-    .marquee-track { display: flex; gap: 3rem; animation: marquee 25s linear infinite; white-space: nowrap; }
-    .marquee-track:hover { animation-play-state: paused; }
-    .marquee-item { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; display: flex; align-items: center; gap: 1.5rem; flex-shrink: 0; }
-    .marquee-item::after { content: '✦'; color: var(--mint); font-size: 0.6rem; }
-    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    section { padding: 6rem 4rem; position: relative; }
-    .section-label { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--orange); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; }
-    .section-label::after { content: ''; flex: 1; max-width: 60px; height: 1px; background: var(--orange); }
-    .section-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(2.2rem, 5vw, 3.5rem); line-height: 1; letter-spacing: -0.02em; margin-bottom: 3.5rem; }
-    .skills-section { background: rgba(13,13,26,0.6); backdrop-filter: blur(10px); }
-    .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5px; background: var(--border); border: 1px solid var(--border); }
-    .skill-card { background: rgba(13,13,26,0.9); padding: 2rem; transition: background 0.2s; }
-    .skill-card:hover { background: rgba(17,17,37,0.98); }
-    .skill-card-label { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--mint); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
-    .skill-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .skill-tag { font-size: 0.8rem; padding: 0.3rem 0.75rem; border-radius: 2px; font-family: 'DM Mono', monospace; color: var(--text); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: border-color 0.2s; }
-    .skill-card:hover .skill-tag { border-color: rgba(0,255,135,0.2); }
-    .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5px; background: var(--border); border: 1px solid var(--border); }
-    .project-card { background: rgba(7,7,15,0.9); padding: 2.5rem; position: relative; overflow: hidden; transition: background 0.25s; }
-    .project-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; transition: opacity 0.25s; opacity: 0; }
-    .project-card.c1::before { background: linear-gradient(90deg, var(--mint), var(--blue)); }
-    .project-card.c2::before { background: linear-gradient(90deg, var(--orange), var(--purple)); }
-    .project-card.c3::before { background: linear-gradient(90deg, var(--purple), var(--mint)); }
-    .project-card:hover { background: rgba(13,13,26,0.98); }
-    .project-card:hover::before { opacity: 1; }
-    .project-card.c1:hover { box-shadow: inset 0 0 60px rgba(0,255,135,0.04); }
-    .project-card.c2:hover { box-shadow: inset 0 0 60px rgba(255,107,53,0.04); }
-    .project-card.c3:hover { box-shadow: inset 0 0 60px rgba(167,139,250,0.04); }
-    .project-num { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 1.5rem; }
-    .project-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.5rem; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
-    .project-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem; }
-    .project-stack { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.5rem; }
-    .project-stack span { font-family: 'DM Mono', monospace; font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 2px; letter-spacing: 0.05em; }
-    .project-stack span.t1 { background: rgba(0,255,135,0.1); color: var(--mint); border: 1px solid rgba(0,255,135,0.2); }
-    .project-stack span.t2 { background: rgba(255,107,53,0.1); color: var(--orange); border: 1px solid rgba(255,107,53,0.2); }
-    .project-stack span.t3 { background: rgba(167,139,250,0.1); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
-    .project-link { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--mint); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.4rem; transition: gap 0.2s; }
-    .project-link:hover { gap: 0.7rem; }
-    .exp-section { background: rgba(13,13,26,0.6); backdrop-filter: blur(10px); }
-    .exp-list { display: flex; flex-direction: column; }
-    .exp-item { display: grid; grid-template-columns: 200px 1fr; gap: 3rem; padding: 2.5rem 0; border-bottom: 1px solid var(--border); }
-    .exp-item:first-child { border-top: 1px solid var(--border); }
-    .exp-dates { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 0.4rem; }
-    .exp-company { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem; }
-    .exp-loc { font-size: 0.78rem; color: var(--muted); }
-    .exp-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.2rem; margin-bottom: 1rem; letter-spacing: -0.01em; }
-    .exp-bullets { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
-    .exp-bullets li { font-size: 0.88rem; color: var(--muted); line-height: 1.65; padding-left: 1.2rem; position: relative; }
-    .exp-bullets li::before { content: '→'; position: absolute; left: 0; color: var(--orange); font-size: 0.75rem; }
-    .contact-section { text-align: center; padding: 8rem 4rem; }
-    .contact-email { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(1.8rem, 5vw, 4rem); color: var(--text); text-decoration: none; letter-spacing: -0.03em; display: inline-block; position: relative; transition: color 0.2s; }
-    .contact-email::after { content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--mint), var(--orange)); transform: scaleX(0); transition: transform 0.3s; transform-origin: left; }
-    .contact-email:hover { color: var(--mint); }
-    .contact-email:hover::after { transform: scaleX(1); }
-    .copy-btn { font-family: 'DM Mono', monospace; font-size: 0.72rem; padding: 0.5rem 1.2rem; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 2px; cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.2s; margin-top: 1rem; display: inline-flex; align-items: center; gap: 0.4rem; }
-    .copy-btn:hover { border-color: var(--mint); color: var(--mint); }
-    .copy-btn.copied { border-color: var(--mint); color: var(--mint); background: rgba(0,255,135,0.08); }
-    .social-links { display: flex; justify-content: center; gap: 2rem; margin-top: 2.5rem; }
-    .social-links a { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--muted); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
-    .social-links a:hover { color: var(--text); }
-    footer { border-top: 1px solid var(--border); padding: 1.5rem 4rem; display: flex; justify-content: space-between; align-items: center; background: rgba(7,7,15,0.9); }
-    footer span { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
-    .fade-in.visible { opacity: 1; transform: translateY(0); }
-    @media (max-width: 768px) {
-      nav { padding: 1rem 1.5rem; } .nav-links { display: none; }
-      .hero, section { padding: 4rem 1.5rem; }
-      .exp-item { grid-template-columns: 1fr; gap: 1rem; }
-      .stats-bar { flex-wrap: wrap; } .stat-item { flex: 1 1 50%; }
-      footer { padding: 1.5rem; flex-direction: column; gap: 0.5rem; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
-      .hero-tag, .hero-name, .hero-desc, .hero-typewriter, .hero-cta, .hero-scroll, .fade-in { opacity: 1 !important; transform: none !important; }
-      .marquee-track, .scroll-line, .cursor-blink { animation: none !important; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jack Siu — Platform / Site Reliability Engineer</title>
+<meta name="description" content="Platform &amp; Site Reliability Engineer. 5+ years building production infrastructure, observability, and incident automation on hyperscale cloud. Terraform, Kubernetes, Prometheus/Grafana.">
+<link rel="canonical" href="https://jacksiu.dev/">
+<meta property="og:type" content="profile">
+<meta property="og:site_name" content="Jack Siu">
+<meta property="og:url" content="https://jacksiu.dev/">
+<meta property="og:title" content="Jack Siu — Platform / Site Reliability Engineer">
+<meta property="og:description" content="5+ years building production infrastructure, observability, and incident automation on hyperscale cloud.">
+<meta property="og:image" content="https://jacksiu.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Jack Siu — Platform / Site Reliability Engineer">
+<meta name="twitter:description" content="5+ years building production infrastructure, observability, and incident automation on hyperscale cloud.">
+<meta name="twitter:image" content="https://jacksiu.dev/og.png">
+<meta name="theme-color" content="#0a0c10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0c10'/%3E%3Crect x='.75' y='.75' width='30.5' height='30.5' rx='6.25' fill='none' stroke='%237aa2f7' stroke-opacity='.45'/%3E%3Ccircle cx='16' cy='9.5' r='2.6' fill='%233ecf8e'/%3E%3Crect x='8' y='16' width='16' height='2.4' rx='1.2' fill='%237aa2f7'/%3E%3Crect x='8' y='21' width='10' height='2.4' rx='1.2' fill='%237aa2f7' fill-opacity='.45'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.className+=' js'</script>
+
+<style>
+@font-face{font-family:'Inter var';src:url('fonts/inter-var.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'JetBrains Mono var';src:url('fonts/jbmono-var.woff2') format('woff2');font-weight:100 800;font-style:normal;font-display:swap}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  /* surfaces */
+  --bg:#0a0c10;
+  --panel:#0e1116;
+  --panel-2:#131720;
+  --line:#1e232c;
+  --line-soft:#171b23;
+  /* text — three tiers, all AA or better on --bg */
+  --fg:#e8ecf2;      /* headings                     15.9:1 */
+  --fg-2:#9aa4b8;    /* body copy, bullets, descs     7.8:1 */
+  --fg-3:#7d8899;    /* meta labels, timestamps       5.5:1 */
+  /* one brand accent */
+  --accent:#7aa2f7;
+  --accent-dim:rgba(122,162,247,.12);
+  /* status — reserved. these never decorate. */
+  --ok:#3ecf8e;
+  --warn:#e0a33e;
+  --crit:#f0616d;
+
+  --sans:'Inter var',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono var',ui-monospace,'Cascadia Mono','SF Mono',Menlo,monospace;
+  --pad:2rem;
+  --max:1140px;
+}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--fg);
+  font-family:var(--sans);font-size:16px;line-height:1.7;
+  font-feature-settings:'cv05' 1,'ss01' 1;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
+
+/* grid children default to min-width:auto, so long mono strings
+   ("~30m → <1m") push the layout wider than the viewport. */
+.hero-grid > *,.strip-grid > div,.grid-2 > *,.kpi > div,.job > *,.contact > *{min-width:0}
+
+/* mono utility — restricted to data, labels, identifiers. never body copy. */
+.m{font-family:var(--mono);font-variant-numeric:tabular-nums;font-feature-settings:'zero' 1}
+
+/* ── skip link ─────────────────────────────────────────── */
+.skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:#08121f;
+  padding:.6rem 1rem;font-size:.85rem;font-weight:600;z-index:200}
+.skip:focus{left:0}
+
+/* ── header ────────────────────────────────────────────── */
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(10,12,16,.82);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line-soft);
+}
+.hdr{display:flex;align-items:center;gap:2rem;height:58px}
+.brand{
+  font-family:var(--mono);font-size:.8rem;font-weight:500;letter-spacing:.14em;
+  text-decoration:none;color:var(--fg);display:flex;align-items:center;gap:.55rem;
+}
+.brand::before{
+  content:'';width:7px;height:7px;border-radius:50%;background:var(--ok);
+  box-shadow:0 0 0 3px rgba(62,207,142,.14);flex:none;
+}
+nav{margin-left:auto;display:flex;gap:1.75rem}
+nav a{
+  font-size:.875rem;color:var(--fg-3);text-decoration:none;
+  transition:color .15s;position:relative;padding:.15rem 0;
+}
+nav a:hover{color:var(--fg)}
+nav a[aria-current='true']{color:var(--fg)}
+nav a[aria-current='true']::after{
+  content:'';position:absolute;left:0;right:0;bottom:-2px;height:1px;background:var(--accent);
+}
+.hdr .resume{
+  font-size:.825rem;font-weight:500;color:var(--fg-2);text-decoration:none;
+  border:1px solid var(--line);border-radius:5px;padding:.4rem .85rem;
+  transition:border-color .15s,color .15s;white-space:nowrap;
+}
+.hdr .resume:hover{border-color:var(--accent);color:var(--fg)}
+
+/* ── hero ──────────────────────────────────────────────── */
+.hero{padding:5.5rem 0 4.5rem}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:4rem;align-items:start}
+.eyebrow{
+  font-family:var(--mono);font-size:.72rem;font-weight:500;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--fg-3);margin-bottom:1.5rem;
+  display:flex;align-items:center;gap:.7rem;
+}
+.eyebrow::before{content:'';width:22px;height:1px;background:var(--accent);flex:none}
+h1{
+  font-size:clamp(2.75rem,6.2vw,4.5rem);font-weight:700;line-height:1.04;
+  letter-spacing:-.035em;margin-bottom:1.1rem;
+}
+.role{
+  font-size:1.2rem;font-weight:500;color:var(--fg);line-height:1.45;
+  margin-bottom:1.1rem;max-width:26ch;
+}
+.lede{font-size:1.0625rem;color:var(--fg-2);line-height:1.72;max-width:52ch;margin-bottom:2rem}
+.cta{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:2rem}
+.btn{
+  font-size:.9rem;font-weight:500;text-decoration:none;
+  padding:.7rem 1.35rem;border-radius:6px;border:1px solid transparent;
+  transition:background .15s,border-color .15s,color .15s;
+}
+.btn-1{background:var(--accent);color:#08121f;font-weight:600}
+.btn-1:hover{background:#93b4f9}
+.btn-2{border-color:var(--line);color:var(--fg-2)}
+.btn-2:hover{border-color:var(--accent);color:var(--fg)}
+.avail{
+  font-family:var(--mono);font-size:.775rem;color:var(--fg-3);
+  display:flex;align-items:center;gap:.55rem;
+}
+.avail .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:none}
+
+/* ── telemetry panel (the one motif) ───────────────────── */
+.tel{
+  border:1px solid var(--line);border-radius:9px;background:var(--panel);
+  overflow:hidden;font-family:var(--mono);
+}
+.tel-head{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:.75rem 1rem;border-bottom:1px solid var(--line-soft);background:var(--panel-2);
+}
+.tel-head .t{font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:var(--fg-3)}
+.tel-state{font-size:.72rem;letter-spacing:.06em;color:var(--ok);display:flex;align-items:center;gap:.45rem}
+.tel-state .dot{
+  width:6px;height:6px;border-radius:50%;background:currentColor;flex:none;
+  box-shadow:0 0 0 3px rgba(62,207,142,.13);
+}
+.tel-body{padding:1rem}
+
+.wf{display:flex;height:26px;border-radius:4px;overflow:hidden;background:#0a0d13;
+  border:1px solid var(--line-soft);margin-bottom:.5rem}
+.wf span{display:block;min-width:2px;transition:flex-basis .4s ease}
+.wf-legend{display:flex;flex-wrap:wrap;gap:.15rem .95rem;font-size:.66rem;color:var(--fg-3);margin-bottom:1rem}
+.wf-legend i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:.35rem;vertical-align:baseline}
+
+.tel-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);
+  border:1px solid var(--line-soft);border-radius:5px;overflow:hidden}
+.tel-grid > div{background:var(--panel);padding:.6rem .75rem}
+.tel-grid dt{font-size:.65rem;letter-spacing:.09em;text-transform:uppercase;color:var(--fg-3);margin-bottom:.15rem}
+.tel-grid dd{font-size:.95rem;font-weight:500;color:var(--fg);letter-spacing:-.01em}
+.tel-grid dd small{font-size:.68rem;font-weight:400;color:var(--fg-3);margin-left:.3rem;letter-spacing:0}
+dd[data-state='ok']{color:var(--ok)}
+dd[data-state='warn']{color:var(--warn)}
+dd[data-state='crit']{color:var(--crit)}
+.tel-foot{
+  font-size:.68rem;line-height:1.6;color:var(--fg-3);
+  padding:.7rem 1rem;border-top:1px solid var(--line-soft);background:var(--panel-2);
+}
+
+/* ── metrics strip ─────────────────────────────────────── */
+.strip{border-block:1px solid var(--line-soft);background:var(--panel)}
+.strip-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+.strip-grid > div{padding:1.75rem 0;border-left:1px solid var(--line-soft)}
+.strip-grid > div:first-child{border-left:0}
+.strip-grid > div:not(:first-child){padding-left:1.75rem}
+.strip-n{
+  font-family:var(--mono);font-variant-numeric:tabular-nums;
+  font-size:1.7rem;font-weight:500;letter-spacing:-.03em;line-height:1.1;color:var(--fg);
+}
+.strip-l{font-size:.8rem;color:var(--fg-2);margin-top:.4rem;line-height:1.45;max-width:22ch}
+
+/* ── sections ──────────────────────────────────────────── */
+section{padding:5rem 0}
+.alt{background:var(--panel);border-block:1px solid var(--line-soft)}
+.sec-head{margin-bottom:2.5rem;max-width:60ch}
+.sec-head .eyebrow{margin-bottom:.85rem}
+h2{font-size:1.75rem;font-weight:600;letter-spacing:-.025em;line-height:1.25}
+.sec-head p{color:var(--fg-2);margin-top:.65rem;font-size:1rem}
+
+/* ── work ──────────────────────────────────────────────── */
+.feature{
+  border:1px solid var(--line);border-radius:10px;background:var(--panel-2);
+  padding:2.25rem;margin-bottom:1.25rem;position:relative;overflow:hidden;
+}
+.feature::before{
+  content:'';position:absolute;inset:0 auto 0 0;width:2px;
+  background:linear-gradient(180deg,var(--accent),transparent 85%);
+}
+.feature-top{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap}
+.pill{
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;
+  padding:.22rem .55rem;border-radius:3px;
+  background:var(--accent-dim);color:var(--accent);border:1px solid rgba(122,162,247,.22);
+}
+.pill-live{background:rgba(62,207,142,.1);color:var(--ok);border-color:rgba(62,207,142,.22)}
+.feature h3{font-size:1.5rem;font-weight:600;letter-spacing:-.025em;margin-bottom:.7rem}
+.feature p{color:var(--fg-2);max-width:68ch;margin-bottom:1.5rem}
+.kpi{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line-soft);border-radius:7px;
+  overflow:hidden;margin-bottom:1.5rem;background:var(--panel)}
+.kpi > div{flex:1 1 150px;padding:.85rem 1.1rem;border-left:1px solid var(--line-soft)}
+.kpi > div:first-child{border-left:0}
+.kpi-n{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:1.05rem;font-weight:500;color:var(--fg)}
+.kpi-l{font-size:.72rem;color:var(--fg-3);margin-top:.15rem;line-height:1.4}
+
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1.25rem}
+.card{
+  border:1px solid var(--line);border-radius:10px;background:var(--panel-2);
+  padding:1.6rem;display:flex;flex-direction:column;
+  transition:border-color .18s,background .18s;
+}
+.card:hover{border-color:#2a3140;background:#151a24}
+.card h3{font-size:1.125rem;font-weight:600;letter-spacing:-.015em;margin-bottom:.55rem}
+.card p{color:var(--fg-2);font-size:.9375rem;line-height:1.68;margin-bottom:1.25rem;flex:1}
+
+.tags{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.25rem}
+.tag{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.02em;
+  padding:.22rem .5rem;border-radius:3px;
+  background:rgba(255,255,255,.035);border:1px solid var(--line);color:var(--fg-2);
+}
+.go{
+  font-size:.85rem;font-weight:500;color:var(--accent);text-decoration:none;
+  display:inline-flex;align-items:center;gap:.4rem;align-self:flex-start;
+}
+.go::after{content:'→';transition:transform .18s}
+.go:hover::after{transform:translateX(3px)}
+.go-off{color:var(--fg-3);font-size:.85rem;font-weight:500}
+
+/* ── experience ────────────────────────────────────────── */
+.job{
+  display:grid;grid-template-columns:210px 1fr;gap:3rem;
+  padding:2.25rem 0;border-top:1px solid var(--line-soft);
+}
+.job:last-child{border-bottom:1px solid var(--line-soft)}
+.job-when{font-family:var(--mono);font-size:.775rem;color:var(--fg-3);letter-spacing:.02em}
+.job-org{font-size:.95rem;font-weight:600;color:var(--fg);margin-top:.35rem}
+.job-loc{font-size:.825rem;color:var(--fg-3)}
+.job-role{font-size:1.125rem;font-weight:600;letter-spacing:-.015em;margin-bottom:.9rem}
+.job ul{list-style:none;display:flex;flex-direction:column;gap:.6rem}
+.job li{color:var(--fg-2);font-size:1rem;line-height:1.68;padding-left:1.15rem;position:relative}
+.job li::before{
+  content:'';position:absolute;left:0;top:.72em;width:5px;height:1px;background:var(--accent);opacity:.8;
+}
+
+/* ── stack ─────────────────────────────────────────────── */
+/* real gaps, not a 1px-background grid — an incomplete last row must not
+   leave a filled empty cell */
+.stack{display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:1rem;
+  align-items:start}
+.stack > div{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;
+  padding:1.35rem 1.4rem}
+.stack h3{
+  font-family:var(--mono);font-size:.7rem;font-weight:500;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--fg-3);margin-bottom:.85rem;
+}
+
+/* ── contact ───────────────────────────────────────────── */
+.contact{display:grid;grid-template-columns:1fr auto;gap:3rem;align-items:end}
+.contact h2{margin-bottom:.65rem}
+.contact p{color:var(--fg-2);max-width:46ch;margin-bottom:1.5rem}
+.mail{
+  font-size:clamp(1.25rem,3.2vw,1.9rem);font-weight:600;letter-spacing:-.025em;
+  color:var(--fg);text-decoration:none;border-bottom:1px solid var(--line);
+  padding-bottom:.15rem;transition:border-color .18s,color .18s;
+}
+.mail:hover{color:var(--accent);border-color:var(--accent)}
+.mail-row{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap}
+.copy{
+  font-family:var(--mono);font-size:.73rem;letter-spacing:.06em;
+  background:transparent;border:1px solid var(--line);color:var(--fg-3);
+  padding:.45rem .8rem;border-radius:5px;cursor:pointer;
+  transition:border-color .15s,color .15s;
+}
+.copy:hover{border-color:var(--accent);color:var(--fg-2)}
+.copy[data-copied]{border-color:var(--ok);color:var(--ok)}
+.elsewhere{display:flex;flex-direction:column;gap:.5rem;text-align:right}
+.elsewhere a{font-size:.9rem;color:var(--fg-2);text-decoration:none;transition:color .15s}
+.elsewhere a:hover{color:var(--accent)}
+
+/* ── footer ────────────────────────────────────────────── */
+footer{border-top:1px solid var(--line-soft);padding:1.5rem 0}
+.foot{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+  font-family:var(--mono);font-size:.72rem;color:var(--fg-3);letter-spacing:.02em}
+
+/* ── reveal ────────────────────────────────────────────────
+   Scoped to .js so content is never hidden when scripting is
+   unavailable or the inline script fails. */
+.js .rv{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}
+.js .rv.in{opacity:1;transform:none}
+
+/* ── responsive ────────────────────────────────────────── */
+@media(max-width:980px){
+  .hero-grid{grid-template-columns:1fr;gap:2.75rem}
+  .tel{max-width:520px}
+  .strip-grid{grid-template-columns:repeat(2,1fr)}
+  .strip-grid > div{border-left:0;border-top:1px solid var(--line-soft);padding:1.35rem 0}
+  .strip-grid > div:nth-child(-n+2){border-top:0}
+  .strip-grid > div:not(:first-child){padding-left:0}
+  .strip-grid > div:nth-child(even){padding-left:1.5rem;border-left:1px solid var(--line-soft)}
+  .job{grid-template-columns:1fr;gap:1rem}
+  .contact{grid-template-columns:1fr;gap:2rem;align-items:start}
+  .elsewhere{flex-direction:row;gap:1.5rem;text-align:left}
+}
+@media(max-width:680px){
+  :root{--pad:1.25rem}
+  nav{display:none}
+  .hdr .resume{margin-left:auto}
+  .grid-2{grid-template-columns:1fr}
+  .hero{padding:3.5rem 0 3rem}
+  section{padding:3.5rem 0}
+  .feature{padding:1.5rem}
+  .tel-grid{grid-template-columns:1fr}
+  .eyebrow{font-size:.66rem;letter-spacing:.1em}
+  .strip-n{font-size:1.35rem}
+  .kpi > div{flex-basis:100%;border-left:0;border-top:1px solid var(--line-soft)}
+  .kpi > div:first-child{border-top:0}
+}
+@media(max-width:420px){
+  .strip-grid{grid-template-columns:1fr}
+  .strip-grid > div{border-left:0!important;padding-left:0!important;
+    border-top:1px solid var(--line-soft)}
+  .strip-grid > div:first-child{border-top:0}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+  .js .rv{opacity:1;transform:none}
+}
+</style>
 </head>
 <body>
-  <canvas id="particle-canvas"></canvas>
-  <div id="root"></div>
-  <script>
-    (function() {
-      const canvas = document.getElementById('particle-canvas');
-      const ctx = canvas.getContext('2d');
-      let W, H, particles, mouse = { x: -9999, y: -9999 }, rafId = null;
-      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const COLORS = ['#00ff87','#2dd4bf','#4a5a6a'];
-      function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-      function Particle() {
-        this.x = Math.random()*W; this.y = Math.random()*H;
-        this.vx = (Math.random()-0.5)*0.4; this.vy = (Math.random()-0.5)*0.4;
-        this.r = Math.random()*1.8+0.8;
-        this.color = COLORS[Math.floor(Math.random()*COLORS.length)];
-        this.baseAlpha = Math.random()*0.4+0.2; this.alpha = this.baseAlpha;
-      }
-      Particle.prototype.update = function() {
-        this.x += this.vx; this.y += this.vy;
-        if(this.x<0||this.x>W) this.vx*=-1;
-        if(this.y<0||this.y>H) this.vy*=-1;
-        const dx=this.x-mouse.x, dy=this.y-mouse.y, dist=Math.sqrt(dx*dx+dy*dy);
-        if(dist<180) {
-          const f=(180-dist)/180;
-          this.vx+=(dx/dist)*f*0.08; this.vy+=(dy/dist)*f*0.08;
-          this.alpha=Math.min(1,this.baseAlpha+f*0.6);
-          const s=Math.sqrt(this.vx*this.vx+this.vy*this.vy);
-          if(s>2.5){this.vx*=2.5/s; this.vy*=2.5/s;}
-        } else {
-          this.alpha+=(this.baseAlpha-this.alpha)*0.05;
-          this.vx*=0.995; this.vy*=0.995;
-          if(Math.abs(this.vx)<0.1) this.vx+=(Math.random()-0.5)*0.05;
-          if(Math.abs(this.vy)<0.1) this.vy+=(Math.random()-0.5)*0.05;
-        }
-      };
-      Particle.prototype.draw = function() {
-        ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
-        ctx.fillStyle=this.color; ctx.globalAlpha=this.alpha; ctx.fill();
-      };
-      function init() { resize(); particles=Array.from({length:35},()=>new Particle()); }
-      function drawConnections() {
-        for(let i=0;i<particles.length;i++) {
-          for(let j=i+1;j<particles.length;j++) {
-            const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
-            const dist=Math.sqrt(dx*dx+dy*dy);
-            if(dist<140) {
-              ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y);
-              ctx.lineTo(particles[j].x,particles[j].y);
-              ctx.strokeStyle='#00ff87'; ctx.globalAlpha=(1-dist/140)*0.25;
-              ctx.lineWidth=0.6; ctx.stroke();
-            }
-          }
-          const mdx=particles[i].x-mouse.x, mdy=particles[i].y-mouse.y;
-          const md=Math.sqrt(mdx*mdx+mdy*mdy);
-          if(md<180) {
-            ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y);
-            ctx.lineTo(mouse.x,mouse.y);
-            ctx.strokeStyle='#00ff87'; ctx.globalAlpha=(1-md/180)*0.5;
-            ctx.lineWidth=0.8; ctx.stroke();
-          }
-        }
-      }
-      function renderFrame() {
-        ctx.clearRect(0,0,W,H);
-        drawConnections();
-        particles.forEach(p=>{p.update();p.draw();});
-        ctx.globalAlpha=1;
-      }
-      function animate() {
-        renderFrame();
-        rafId = requestAnimationFrame(animate);
-      }
-      function start() { if(rafId===null && !document.hidden) animate(); }
-      function stop() { if(rafId!==null){ cancelAnimationFrame(rafId); rafId=null; } }
-      window.addEventListener('resize',resize);
-      window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
-      window.addEventListener('mouseleave',()=>{mouse.x=-9999;mouse.y=-9999;});
-      document.addEventListener('visibilitychange',()=>{ document.hidden ? stop() : start(); });
-      init();
-      if(reduceMotion){ renderFrame(); } else { start(); }
-    })();
-  </script>
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
+<a class="skip" href="#main">Skip to content</a>
 
-    function Typewriter({phrases}) {
-      const [display,setDisplay]=useState('');
-      const [pi,setPi]=useState(0);
-      const [ci,setCi]=useState(0);
-      const [del,setDel]=useState(false);
-      useEffect(()=>{
-        const cur=phrases[pi]; let t;
-        if(!del&&ci<cur.length) t=setTimeout(()=>setCi(c=>c+1),60);
-        else if(!del&&ci===cur.length) t=setTimeout(()=>setDel(true),2000);
-        else if(del&&ci>0) t=setTimeout(()=>setCi(c=>c-1),35);
-        else if(del&&ci===0){setDel(false);setPi(i=>(i+1)%phrases.length);}
-        setDisplay(cur.slice(0,ci));
-        return()=>clearTimeout(t);
-      },[ci,del,pi]);
-      return(<div className="hero-typewriter">{display}<span className="cursor-blink"/></div>);
-    }
+<header>
+  <div class="wrap hdr">
+    <a class="brand" href="/">JACK SIU</a>
+    <nav>
+      <a href="#work">Work</a>
+      <a href="#experience">Experience</a>
+      <a href="#stack">Stack</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a class="resume" href="Jack_Siu_Resume.pdf" download>Résumé ↓</a>
+  </div>
+</header>
 
-    function Counter({target,suffix=''}) {
-      const [count,setCount]=useState(typeof target==='number'?0:target);
-      const ref=useRef();
-      useEffect(()=>{
-        if(typeof target!=='number')return;
-        const obs=new IntersectionObserver(entries=>{
-          if(entries[0].isIntersecting){
-            let s=0; const step=target/50;
-            const t=setInterval(()=>{s+=step;if(s>=target){setCount(target);clearInterval(t);}else setCount(Math.floor(s));},30);
-            obs.disconnect();
-          }
-        });
-        if(ref.current)obs.observe(ref.current);
-        return()=>obs.disconnect();
-      },[]);
-      return <span ref={ref}>{count}{suffix}</span>;
-    }
+<main id="main">
 
-    function useFadeIn(ref) {
-      useEffect(()=>{
-        const obs=new IntersectionObserver(entries=>{
-          entries.forEach((e,i)=>{if(e.isIntersecting)setTimeout(()=>e.target.classList.add('visible'),i*80);});
-        },{threshold:0.1});
-        if(ref.current)ref.current.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
-        return()=>obs.disconnect();
-      },[]);
-    }
-
-    const skills=[
-      {label:"Cloud & Infrastructure",tags:["Terraform","Kubernetes","Docker","Helm","OCI","Linux","Vault"]},
-      {label:"Observability & Reliability",tags:["Prometheus","Grafana","SLOs / SLIs","Error Budgets","MTTR","Alerting"]},
-      {label:"SRE Practices",tags:["Incident Response","Blameless Post-Mortems","On-Call","Runbooks","DevSecOps"]},
-      {label:"CI/CD & Automation",tags:["Jenkins","Git-based Pipelines","IaC","GitOps / ArgoCD","Maven"]},
-      {label:"Languages",tags:["Python","Bash","TypeScript","Node.js","SQL","Go (learning)"]},
-    ];
-    const projects=[
-      {num:"01",name:"Incident Automation Engine",desc:"Event-driven distributed system that ingests production alerts, auto-routes and resolves incidents, and streams structured telemetry to downstream consumers — cutting incident MTTR and ~10 hours/week of on-call triage on a high-availability critical path.",stack:["Python","Kubernetes","Terraform"],link:"incident-engine.html",linkLabel:"View Architecture",color:"c3"},
-      {num:"02",name:"pebbl.",desc:"iOS and Android photo booth app with camera filters, sticker overlays, and a freemium subscription model. Shipped to App Store and Google Play with a full CI/CD pipeline and RevenueCat monetization.",stack:["React Native","Expo","CI/CD"],link:"https://pebbl-photobooth.carrd.co",linkLabel:"View project",color:"c1"},
-      {num:"03",name:"DUPE",desc:"A pass-the-phone social deduction party game for 3–8 players. Everyone gets a secret word — except the Dupe, who gets a loose decoy. Give clues, hunt the outsider, vote them out. Custom SVG avatars, 110+ word packs, zero setup.",stack:["React","SVG","Game Design"],link:"https://play-dupe.vercel.app",linkLabel:"Play Now",color:"c2"},
-      {num:"04",name:"SmartMaze",desc:"Full-stack AI maze solver implementing BFS, A*, Hill Climbing, and Genetic Algorithms. Watch them compete live in the interactive demo.",stack:["Python","Tkinter","p5.js","JavaScript"],link:"maze.html",linkLabel:"Live Demo",color:"c2"},
-      {num:"05",name:"AI Property Manager",desc:"AI agent that automates end-to-end property management — tenant communication, maintenance scheduling, and lease workflows. Built with LLM-powered automation and real-time integrations.",stack:["Python","React","LLMs"],link:null,linkLabel:"Coming Soon",color:"c1"},
-    ];
-    const experience=[
-      {company:"Oracle Cloud Infrastructure",dates:"June 2022 — April 2026",location:"Seattle, WA",title:"Software Development Engineer II, Data Platform",bullets:["Architected multi-region infrastructure on OCI with Terraform + Kubernetes; codified provisioning across distributed data services","Built Prometheus + Grafana observability with SLOs, SLIs, and error-budget alerting that surfaced regressions before customers — prevented a customer-facing outage on a major downstream consumer","Automated incident triage with an event-driven service that auto-creates, routes, and resolves tickets — cut incident MTTR and ~10 hours/week of on-call toil; led blameless post-mortems","Engineered real-time streaming pipelines emitting incident telemetry to internal consumers","Cut developer onboarding time 60–70% with self-serve tooling; authored runbooks adopted org-wide","Drove DevSecOps hardening: migrated hardcoded credentials to Vault, remediated CVEs, and patched dependencies across services"]},
-      {company:"pebbl.",dates:"2024 — Present",location:"Remote",title:"Lead Software Engineer & Founder",bullets:["Shipped a cross-platform iOS/Android app from zero to production on App Store and Google Play","Designed CI/CD pipelines and backend services for real-time image processing and content delivery","Built subscription monetization via RevenueCat with in-app purchases and analytics"]},
-      {company:"Trinnex",dates:"Aug 2020 — May 2022",location:"Philadelphia, PA",title:"Backend Software Engineer",bullets:["Built and shipped full-stack features (Angular/TypeScript, Node.js, Oracle) for secure government platforms under strict compliance","Engineered backend data pipelines and GeoJSON visualization services","Optimized PL/SQL systems for query performance across compliance-bound datasets"]},
-    ];
-    const marqueeItems=["Terraform","Kubernetes","Prometheus","Grafana","SLOs","Error Budgets","MTTR","DevSecOps","Docker","Helm","Vault","Python","Bash","CI/CD","Jenkins","ArgoCD","Linux","OCI","IaC","Observability"];
-
-    function CopyEmail() {
-      const [copied, setCopied] = useState(false);
-      const copy = () => {
-        navigator.clipboard.writeText('jacksiu.dev@gmail.com');
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      };
-      return (
-        <button className={`copy-btn${copied?' copied':''}`} onClick={copy}>
-          {copied ? '✓ Copied!' : '⧉ Copy Email'}
-        </button>
-      );
-    }
-
-    function App() {
-      const skillsRef=useRef();useFadeIn(skillsRef);
-      const projectsRef=useRef();useFadeIn(projectsRef);
-      const expRef=useRef();useFadeIn(expRef);
-      const contactRef=useRef();useFadeIn(contactRef);
-      const [activeSection,setActiveSection]=useState('');
-      useEffect(()=>{
-        const sections=[
-          {id:'skills',ref:skillsRef},
-          {id:'projects',ref:projectsRef},
-          {id:'experience',ref:expRef},
-          {id:'contact',ref:contactRef}
-        ];
-        const obs=new IntersectionObserver(entries=>{
-          entries.forEach(e=>{if(e.isIntersecting)setActiveSection(e.target.id);});
-        },{threshold:0.3});
-        sections.forEach(s=>{if(s.ref.current)obs.observe(s.ref.current);});
-        return()=>obs.disconnect();
-      },[]);
-      return(<>
-        <nav style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div className="nav-logo">JS</div>
-          <div className="nav-links">
-            <a href="#skills" className={activeSection==='skills'?'active':''}>Skills</a>
-            <a href="#projects" className={activeSection==='projects'?'active':''}>Projects</a>
-            <a href="#experience" className={activeSection==='experience'?'active':''}>Experience</a>
-            <a href="#contact" className={activeSection==='contact'?'active':''}>Contact</a>
-          </div>
-          <a href="Jack_Siu_Resume.pdf" download className="btn btn-secondary" style={{padding:"0.5rem 1.2rem",fontSize:"0.72rem",whiteSpace:"nowrap"}}>↓ Resume</a>
-        </nav>
-        <section className="hero">
-          <div className="hero-tag">Platform · Site Reliability Engineer</div>
-          <h1 className="hero-name">Jack<br/><span className="accent">Siu</span></h1>
-          <p className="hero-desc">Platform &amp; SRE engineer building production infrastructure, observability, and incident automation for hyperscale cloud — the systems that keep everything else running.</p>
-          <Typewriter phrases={["Platform Engineer.","Site Reliability Engineer.","Terraform + Kubernetes.","Automating on-call away.","Cat Dad. 🐱"]}/>
-          <div className="hero-cta">
-            <a href="#projects" className="btn btn-primary">View Work</a>
-            <a href="#contact" className="btn btn-secondary">Get in Touch</a>
-          </div>
-          <div className="hero-scroll"><div className="scroll-line"/>Scroll</div>
-        </section>
-        <div className="stats-bar">
-          {[{num:5,suffix:'+',label:'Years in Production Infra'},{num:70,suffix:'%',label:'Onboarding Time Cut'},{num:10,suffix:'hrs',label:'On-Call Toil Killed / Week'},{num:'∞',suffix:'',label:'Cups of Coffee'}].map((s,i)=>(
-            <div className="stat-item" key={i}>
-              <div className="stat-num"><Counter target={s.num} suffix={s.suffix}/></div>
-              <div className="stat-label">{s.label}</div>
-            </div>
-          ))}
+  <!-- ── hero ─────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">Platform · Site Reliability Engineering</p>
+        <h1>Jack Siu</h1>
+        <p class="role">I build the infrastructure that everything else runs on — and the automation that keeps it quiet.</p>
+        <p class="lede">
+          5+ years in production infrastructure at hyperscale cloud. Terraform and Kubernetes for
+          the platform, Prometheus and Grafana for the signal, event-driven automation for the
+          incidents nobody should have to page a human for.
+        </p>
+        <div class="cta">
+          <a class="btn btn-1" href="#work">Selected work</a>
+          <a class="btn btn-2" href="#contact">Get in touch</a>
         </div>
-        <div className="marquee-wrapper">
-          <div className="marquee-track">
-            {[...marqueeItems,...marqueeItems].map((item,i)=><div className="marquee-item" key={i}>{item}</div>)}
+        <p class="avail"><span class="dot"></span>Open to Platform / SRE / Infrastructure roles — NYC or remote</p>
+      </div>
+
+      <!-- live telemetry for this page. real numbers, measured client-side. -->
+      <aside class="tel" aria-label="Live performance telemetry for this page">
+        <div class="tel-head">
+          <span class="t">this page</span>
+          <span class="tel-state"><span class="dot"></span>operational</span>
+        </div>
+        <div class="tel-body">
+          <div class="wf" id="wf" role="img" aria-label="Load phase breakdown for this page"></div>
+          <div class="wf-legend" id="wfLegend"></div>
+          <dl class="tel-grid">
+            <div><dt>TTFB</dt><dd id="mTtfb">—</dd></div>
+            <div><dt>DOM interactive</dt><dd id="mDom">—</dd></div>
+            <div><dt>Fully loaded</dt><dd id="mLoad">—</dd></div>
+            <div><dt>Transferred</dt><dd id="mBytes">—</dd></div>
+            <div><dt>Requests</dt><dd id="mReq">—</dd></div>
+            <div><dt>Third-party deps</dt><dd id="mThird">—</dd></div>
+          </dl>
+        </div>
+        <p class="tel-foot">
+          Measured in your browser via the Navigation Timing API on this page load — not a mockup.
+          Colour is thresholded against a 1&nbsp;s load budget.
+        </p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ── impact strip ─────────────────────────────────── -->
+  <div class="strip">
+    <div class="wrap strip-grid">
+      <div>
+        <div class="strip-n">5+</div>
+        <div class="strip-l">Years running production infrastructure</div>
+      </div>
+      <div>
+        <div class="strip-n">~30m → &lt;1m</div>
+        <div class="strip-l">Incident triage time, after automation</div>
+      </div>
+      <div>
+        <div class="strip-n">~10 hrs</div>
+        <div class="strip-l">On-call toil removed per week</div>
+      </div>
+      <div>
+        <div class="strip-n">60–70%</div>
+        <div class="strip-l">Reduction in developer onboarding time</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── work ─────────────────────────────────────────── -->
+  <section id="work">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <p class="eyebrow">Selected work</p>
+        <h2>Systems I built and operated</h2>
+        <p>The first one is the one worth reading — it ran in production for years and is the clearest picture of how I think about reliability.</p>
+      </div>
+
+      <article class="feature rv">
+        <div class="feature-top">
+          <span class="pill">Case study</span>
+          <span class="pill pill-live">Multi-year in production</span>
+        </div>
+        <h3>Incident Automation Engine</h3>
+        <p>
+          Event-driven system at Oracle Cloud Infrastructure that ingests alerts, system events, and
+          failed health checks, then deduplicates, enriches, and drives the full incident lifecycle —
+          create, route, resolve, notify — without a human in the loop. Structured telemetry streams
+          to downstream consumers so other teams build on it instead of getting paged.
+        </p>
+        <div class="kpi">
+          <div><div class="kpi-n">~30m → &lt;1m</div><div class="kpi-l">Triage MTTR per ticket</div></div>
+          <div><div class="kpi-n">20+ / week</div><div class="kpi-l">Incidents handled automatically</div></div>
+          <div><div class="kpi-n">~10 hrs / week</div><div class="kpi-l">On-call toil removed</div></div>
+        </div>
+        <div class="tags">
+          <span class="tag">Python</span><span class="tag">Kubernetes</span><span class="tag">Terraform</span>
+          <span class="tag">Pub/Sub</span><span class="tag">Grafana</span>
+        </div>
+        <a class="go" href="incident-engine.html">Read the architecture &amp; tradeoffs</a>
+      </article>
+
+      <div class="grid-2">
+        <article class="card rv">
+          <h3>pebbl.</h3>
+          <p>
+            iOS and Android photo booth app — camera filters, sticker overlays, freemium
+            subscriptions. Shipped to both stores from zero, with a CI/CD pipeline and
+            RevenueCat monetization behind it.
+          </p>
+          <div class="tags"><span class="tag">React Native</span><span class="tag">Expo</span><span class="tag">CI/CD</span><span class="tag">RevenueCat</span></div>
+          <a class="go" href="https://pebbl-photobooth.carrd.co" target="_blank" rel="noreferrer">View project</a>
+        </article>
+
+        <article class="card rv">
+          <h3>DUPE</h3>
+          <p>
+            Pass-the-phone social deduction game for 3–8 players. Everyone gets a secret word
+            except the Dupe, who gets a decoy. Custom SVG avatars, 110+ word packs, zero setup.
+          </p>
+          <div class="tags"><span class="tag">React</span><span class="tag">SVG</span><span class="tag">Game design</span></div>
+          <a class="go" href="https://play-dupe.vercel.app" target="_blank" rel="noreferrer">Play it</a>
+        </article>
+
+        <article class="card rv">
+          <h3>SmartMaze</h3>
+          <p>
+            Full-stack maze solver implementing BFS, A*, hill climbing, and genetic algorithms,
+            racing them against each other in an interactive live demo.
+          </p>
+          <div class="tags"><span class="tag">Python</span><span class="tag">p5.js</span><span class="tag">Tkinter</span></div>
+          <a class="go" href="maze.html">Live demo</a>
+        </article>
+
+        <article class="card rv">
+          <h3>AI Property Manager</h3>
+          <p>
+            LLM-driven agent automating end-to-end property management — tenant communication,
+            maintenance scheduling, and lease workflows against real-time integrations.
+          </p>
+          <div class="tags"><span class="tag">Python</span><span class="tag">React</span><span class="tag">LLMs</span></div>
+          <span class="go-off">In progress</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── experience ───────────────────────────────────── -->
+  <section id="experience" class="alt">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <p class="eyebrow">Experience</p>
+        <h2>Where I've operated</h2>
+      </div>
+
+      <article class="job rv">
+        <div>
+          <div class="job-when">Jun 2022 — Apr 2026</div>
+          <div class="job-org">Oracle Cloud Infrastructure</div>
+          <div class="job-loc">Seattle, WA</div>
+        </div>
+        <div>
+          <div class="job-role">Software Development Engineer II — Data Platform</div>
+          <ul>
+            <li>Architected multi-region infrastructure on OCI with Terraform and Kubernetes, codifying provisioning across distributed data services.</li>
+            <li>Built the Prometheus and Grafana observability stack with SLOs, SLIs, and error-budget alerting that surfaced regressions before customers saw them — caught one that would have been a customer-facing outage on a major downstream consumer.</li>
+            <li>Automated incident triage with an event-driven service that creates, routes, and resolves tickets on its own — cut MTTR and ~10 hours/week of on-call toil. Led the blameless post-mortems that fed back into it.</li>
+            <li>Engineered real-time streaming pipelines emitting structured incident telemetry to internal consumers.</li>
+            <li>Cut developer onboarding time 60–70% with self-serve tooling; wrote the runbooks that were adopted org-wide.</li>
+            <li>Drove DevSecOps hardening: migrated hardcoded credentials into Vault, remediated CVEs, and patched dependencies across services.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="job rv">
+        <div>
+          <div class="job-when">2024 — Present</div>
+          <div class="job-org">pebbl.</div>
+          <div class="job-loc">Remote</div>
+        </div>
+        <div>
+          <div class="job-role">Founder &amp; Lead Software Engineer</div>
+          <ul>
+            <li>Shipped a cross-platform iOS/Android app from zero to production on the App Store and Google Play.</li>
+            <li>Designed the CI/CD pipelines and backend services behind real-time image processing and content delivery.</li>
+            <li>Built subscription monetization via RevenueCat, with in-app purchases and analytics.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="job rv">
+        <div>
+          <div class="job-when">Aug 2020 — May 2022</div>
+          <div class="job-org">Trinnex</div>
+          <div class="job-loc">Philadelphia, PA</div>
+        </div>
+        <div>
+          <div class="job-role">Backend Software Engineer</div>
+          <ul>
+            <li>Built and shipped full-stack features (Angular/TypeScript, Node.js, Oracle) for secure government platforms under strict compliance requirements.</li>
+            <li>Engineered backend data pipelines and GeoJSON visualization services.</li>
+            <li>Optimized PL/SQL systems for query performance across compliance-bound datasets.</li>
+          </ul>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ── stack ────────────────────────────────────────── -->
+  <section id="stack">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <p class="eyebrow">Stack</p>
+        <h2>What I reach for</h2>
+      </div>
+      <div class="stack rv">
+        <div>
+          <h3>Cloud &amp; infrastructure</h3>
+          <div class="tags">
+            <span class="tag">Terraform</span><span class="tag">Kubernetes</span><span class="tag">Docker</span>
+            <span class="tag">Helm</span><span class="tag">OCI</span><span class="tag">Linux</span><span class="tag">Vault</span>
           </div>
         </div>
-        <section id="skills" className="skills-section" ref={skillsRef}>
-          <div className="section-label fade-in">What I work with</div>
-          <h2 className="section-title fade-in">Tech Stack</h2>
-          <div className="skills-grid">
-            {skills.map((s,i)=>(
-              <div className="skill-card fade-in" key={i}>
-                <div className="skill-card-label">{s.label}</div>
-                <div className="skill-tags">{s.tags.map((t,j)=><span className="skill-tag" key={j}>{t}</span>)}</div>
-              </div>
-            ))}
+        <div>
+          <h3>Observability &amp; reliability</h3>
+          <div class="tags">
+            <span class="tag">Prometheus</span><span class="tag">Grafana</span><span class="tag">SLOs / SLIs</span>
+            <span class="tag">Error budgets</span><span class="tag">MTTR</span><span class="tag">Alerting</span>
           </div>
-        </section>
-        <section id="projects" ref={projectsRef}>
-          <div className="section-label fade-in">Selected Work</div>
-          <h2 className="section-title fade-in">Projects</h2>
-          <div className="projects-grid">
-            {projects.map((p,i)=>(
-              <div className={`project-card fade-in ${p.color}`} key={i}>
-                <div className="project-num">{p.num} —</div>
-                <div className="project-name">{p.name}</div>
-                <p className="project-desc">{p.desc}</p>
-                <div className="project-stack">{p.stack.map((t,j)=><span key={j} className={`t${(j%3)+1}`}>{t}</span>)}</div>
-                {p.link ? <a href={p.link} target="_blank" rel="noreferrer" className="project-link">{p.linkLabel} →</a> : <span className="project-link" style={{color:'var(--muted)',cursor:'default'}}>{p.linkLabel}</span>}
-              </div>
-            ))}
+        </div>
+        <div>
+          <h3>SRE practice</h3>
+          <div class="tags">
+            <span class="tag">Incident response</span><span class="tag">Blameless post-mortems</span>
+            <span class="tag">On-call</span><span class="tag">Runbooks</span><span class="tag">DevSecOps</span>
           </div>
-        </section>
-        <section id="experience" className="exp-section" ref={expRef}>
-          <div className="section-label fade-in">Where I've been</div>
-          <h2 className="section-title fade-in">Experience</h2>
-          <div className="exp-list">
-            {experience.map((e,i)=>(
-              <div className="exp-item fade-in" key={i}>
-                <div className="exp-meta">
-                  <div className="exp-dates">{e.dates}</div>
-                  <div className="exp-company">{e.company}</div>
-                  <div className="exp-loc">{e.location}</div>
-                </div>
-                <div className="exp-content">
-                  <div className="exp-title">{e.title}</div>
-                  <ul className="exp-bullets">{e.bullets.map((b,j)=><li key={j}>{b}</li>)}</ul>
-                </div>
-              </div>
-            ))}
+        </div>
+        <div>
+          <h3>CI/CD &amp; automation</h3>
+          <div class="tags">
+            <span class="tag">GitOps / ArgoCD</span><span class="tag">Jenkins</span><span class="tag">IaC</span>
+            <span class="tag">Git pipelines</span><span class="tag">Maven</span>
           </div>
-        </section>
-        <section id="contact" className="contact-section" ref={contactRef}>
-          <div className="section-label fade-in" style={{justifyContent:'center'}}>Let's work together</div>
-          <h2 className="section-title fade-in" style={{marginBottom:'1.5rem'}}>Get in Touch</h2>
-          <p className="fade-in" style={{color:'var(--muted)',marginBottom:'2rem',fontSize:'1rem'}}>Open to Platform, SRE, and Infrastructure roles — NYC or remote.</p>
-          <a href="mailto:jacksiu.dev@gmail.com" className="contact-email fade-in">jacksiu.dev@gmail.com</a>
-          <div className="fade-in" style={{marginTop:'1.2rem'}}>
-            <CopyEmail />
+        </div>
+        <div>
+          <h3>Languages</h3>
+          <div class="tags">
+            <span class="tag">Python</span><span class="tag">Bash</span><span class="tag">TypeScript</span>
+            <span class="tag">Node.js</span><span class="tag">SQL</span><span class="tag">Go (learning)</span>
           </div>
-          <div className="social-links fade-in">
-            <a href="https://github.com/jackklop" target="_blank" rel="noreferrer">GitHub</a>
-            <a href="https://linkedin.com/in/jack-siu1" target="_blank" rel="noreferrer">LinkedIn</a>
-          </div>
-        </section>
-        <footer>
-          <span>© 2026 Jack Siu</span>
-          <span>Built with React · Hosted on GitHub Pages</span>
-        </footer>
-      </>);
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── contact ──────────────────────────────────────── -->
+  <section id="contact" class="alt">
+    <div class="wrap contact">
+      <div class="rv">
+        <p class="eyebrow">Contact</p>
+        <h2>Let's talk reliability</h2>
+        <p>Open to Platform, SRE, and Infrastructure roles — NYC or remote. Fastest way to reach me is email.</p>
+        <div class="mail-row">
+          <a class="mail" href="mailto:jacksiu.dev@gmail.com">jacksiu.dev@gmail.com</a>
+          <button class="copy" id="copyBtn" type="button">Copy</button>
+        </div>
+      </div>
+      <div class="elsewhere rv">
+        <a href="https://github.com/jackklop" target="_blank" rel="noreferrer">GitHub ↗</a>
+        <a href="https://linkedin.com/in/jack-siu1" target="_blank" rel="noreferrer">LinkedIn ↗</a>
+        <a href="Jack_Siu_Resume.pdf" download>Résumé ↓</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>© 2026 Jack Siu</span>
+    <span>Static HTML · no framework, no build step, no third-party runtime</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── live page telemetry ───────────────────────────────
+     Everything here is measured from this actual page load.
+     Nothing is faked; if the API is unavailable we say so. */
+
+  var PHASES = [
+    { key: 'dns',      label: 'DNS',      color: '#7aa2f7' },
+    { key: 'connect',  label: 'Connect',  color: '#5c8ae6' },
+    { key: 'wait',     label: 'Wait',     color: '#e0a33e' },
+    { key: 'download', label: 'Download', color: '#3ecf8e' },
+    { key: 'dom',      label: 'DOM',      color: '#8791a6' },
+    { key: 'finish',   label: 'Finish',   color: '#5b6579' }
+  ];
+
+  var LOAD_BUDGET_MS = 1000;
+
+  function ms(v) { return v < 10 ? v.toFixed(1) + ' ms' : Math.round(v) + ' ms'; }
+  function kb(bytes) {
+    if (bytes >= 1048576) return (bytes / 1048576).toFixed(2) + ' MB';
+    return Math.round(bytes / 1024) + ' KB';
+  }
+  function set(id, text, state, note) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    if (note) el.insertAdjacentHTML('beforeend', ' <small>' + note + '</small>');
+    if (state) el.setAttribute('data-state', state);
+  }
+  function budgetState(v, good, ok) {
+    return v <= good ? 'ok' : v <= ok ? 'warn' : 'crit';
+  }
+
+  function render() {
+    var nav = (performance.getEntriesByType &&
+               performance.getEntriesByType('navigation')[0]) || null;
+    if (!nav || !nav.loadEventEnd) {
+      set('mTtfb', 'unavailable');
+      return;
     }
-    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-  </script>
+
+    var t = {
+      dns:      Math.max(0, nav.domainLookupEnd - nav.domainLookupStart),
+      connect:  Math.max(0, nav.connectEnd - nav.connectStart),
+      wait:     Math.max(0, nav.responseStart - nav.requestStart),
+      download: Math.max(0, nav.responseEnd - nav.responseStart),
+      dom:      Math.max(0, nav.domContentLoadedEventEnd - nav.responseEnd),
+      finish:   Math.max(0, nav.loadEventEnd - nav.domContentLoadedEventEnd)
+    };
+    var total = PHASES.reduce(function (s, p) { return s + t[p.key]; }, 0) || 1;
+
+    /* waterfall */
+    var wf = document.getElementById('wf');
+    var legend = document.getElementById('wfLegend');
+    wf.innerHTML = '';
+    legend.innerHTML = '';
+    PHASES.forEach(function (p) {
+      var v = t[p.key];
+      var bar = document.createElement('span');
+      bar.style.cssText = 'flex:' + (v / total) + ' 1 0;background:' + p.color;
+      bar.title = p.label + ' — ' + ms(v);
+      wf.appendChild(bar);
+      legend.insertAdjacentHTML('beforeend',
+        '<span><i style="background:' + p.color + '"></i>' + p.label + ' ' + ms(v) + '</span>');
+    });
+
+    /* resource accounting */
+    var res = performance.getEntriesByType ? performance.getEntriesByType('resource') : [];
+    var origin = location.origin;
+    var thirdParty = res.filter(function (r) {
+      return r.name.indexOf('http') === 0 && r.name.indexOf(origin) !== 0;
+    });
+    var bytes = (nav.transferSize || 0) + res.reduce(function (s, r) {
+      return s + (r.transferSize || 0);
+    }, 0);
+
+    var ttfb = nav.responseStart - nav.requestStart;
+    var domI = nav.domInteractive;
+    var load = nav.loadEventEnd;
+
+    set('mTtfb', ms(ttfb), budgetState(ttfb, 200, 600));
+    set('mDom',  ms(domI), budgetState(domI, 500, 1500));
+    set('mLoad', ms(load), budgetState(load, LOAD_BUDGET_MS, LOAD_BUDGET_MS * 2.5),
+        '/ ' + LOAD_BUDGET_MS + ' ms budget');
+    set('mBytes', bytes ? kb(bytes) : 'cached', null);
+    set('mReq', String(res.length + 1), null, 'incl. document');
+    set('mThird', String(thirdParty.length), thirdParty.length === 0 ? 'ok' : 'warn');
+  }
+
+  if (document.readyState === 'complete') {
+    setTimeout(render, 0);
+  } else {
+    window.addEventListener('load', function () { setTimeout(render, 0); });
+  }
+
+  /* ── scroll reveal ─────────────────────────────────── */
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reveals = document.querySelectorAll('.rv');
+  if (reduce || !('IntersectionObserver' in window)) {
+    reveals.forEach(function (el) { el.classList.add('in'); });
+  } else {
+    var ro = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); ro.unobserve(e.target); }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+    reveals.forEach(function (el) { ro.observe(el); });
+  }
+
+  /* ── nav current-section ───────────────────────────── */
+  var links = {};
+  document.querySelectorAll('nav a[href^="#"]').forEach(function (a) {
+    links[a.getAttribute('href').slice(1)] = a;
+  });
+  if ('IntersectionObserver' in window) {
+    var so = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var a = links[e.target.id];
+        if (a) a.setAttribute('aria-current', e.isIntersecting ? 'true' : 'false');
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    Object.keys(links).forEach(function (id) {
+      var s = document.getElementById(id);
+      if (s) so.observe(s);
+    });
+  }
+
+  /* ── copy email ────────────────────────────────────── */
+  var btn = document.getElementById('copyBtn');
+  btn.addEventListener('click', function () {
+    var done = function () {
+      btn.textContent = 'Copied';
+      btn.setAttribute('data-copied', '');
+      setTimeout(function () {
+        btn.textContent = 'Copy';
+        btn.removeAttribute('data-copied');
+      }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText('jacksiu.dev@gmail.com').then(done, function () {});
+    }
+  });
+})();
+</script>
 </body>
 </html>
